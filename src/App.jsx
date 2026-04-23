@@ -46,14 +46,56 @@ const appId = typeof __app_id !== 'undefined' ? __app_id : 'bibliokeepers-atm';
 const getColl = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
 const getDocRef = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, String(id));
 
-// --- 1. DATOS INICIALES Y CONFIGURACIÓN ---
+// --- 1. DATOS INICIALES Y LOGOS ---
 const LOGO_ATM_URL = "/escudo.PNG"; 
+const LOGO_APP_ICON = "/bibliokeepers.PNG";
 const FALLBACK_LOGO = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a2b56"/><text x="50" y="55" font-family="sans-serif" font-size="20" fill="white" font-weight="bold" text-anchor="middle">ATM</text></svg>`;
 const FALLBACK_IMG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="%23ffffff"/><text x="300" y="200" font-family="sans-serif" font-size="20" fill="%23cc2b2b" text-anchor="middle">Gráfico</text></svg>`;
 
 const mockUsersInitial = [
   { id: 1, name: 'Admin Principal', username: 'admin', password: '123', role: 'admin', avatar: 'https://ui-avatars.com/api/?name=Admin+ATM&background=0A1C40&color=fff', active: true },
   { id: 2, name: 'Diego Pablo Simeone', username: 'cholo', password: '123', role: 'coach', avatar: 'https://ui-avatars.com/api/?name=Diego+Simeone&background=CB3524&color=fff', active: true },
+  { id: 3, name: 'Germán Burgos', username: 'mono', password: '123', role: 'coach', avatar: 'https://ui-avatars.com/api/?name=German+Burgos&background=64748b&color=fff', active: true },
+];
+
+const initialTasksData = [
+  {
+    id: 'ej-1',
+    title: 'Blocaje Lateral Raso Estático',
+    source: 'Sesión Extraída',
+    mainObjective: 'Blocaje Lateral Raso Estático',
+    secondaryContents: 'Caída lateral en estático + perfilamiento',
+    description: 'Trabajo individual caída lateral en estático\n1. Blocaje lateral raso lado derecho\n2. Blocaje lateral raso lado izquierdo',
+    variant: 'Sin variante',
+    duration: '10 minutos',
+    category: 'TÉCNICA',
+    imageUrl: FALLBACK_IMG,
+    author: { name: 'Diego Pablo Simeone', avatar: 'https://ui-avatars.com/api/?name=Diego+Simeone&background=CB3524&color=fff' },
+    likes: ['cholo'],
+    comments: [],
+    visibility: 'public'
+  }
+];
+
+const initialGoalkeepers = [
+  { id: 'gk-1', name: 'Jorge Santiago', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Jorge+Santiago&background=0D8ABC&color=fff', stats: { reflexes: 8, aerial: 5, oneVone: 7, blocking: 9, footwork: 6 }, history: [{date: '01/04/2026', rating: 8, comment: 'Buen entreno'}, {date: '08/04/2026', rating: 9, comment: 'Excelente blocaje'}] },
+  { id: 'gk-2', name: 'Francisco Redondo', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Francisco+Redondo&background=4CAF50&color=fff', stats: { reflexes: 7, aerial: 6, oneVone: 8, blocking: 7, footwork: 7 }, history: [{date: '01/04/2026', rating: 6, comment: 'Falta reacción'}, {date: '08/04/2026', rating: 7, comment: 'Mejorando'}] },
+  { id: 'gk-3', name: 'Alejandro Iglesias', year: '2011', category: 'Infantil A', assignedCoach: 'mono', avatar: 'https://ui-avatars.com/api/?name=Alejandro+Iglesias&background=E53935&color=fff', stats: { reflexes: 9, aerial: 7, oneVone: 8, blocking: 6, footwork: 5 }, history: [{date: '01/04/2026', rating: 9, comment: 'Brillante'}] }
+];
+
+const mockOcrDatabase = [
+  { 
+    mainObjective: 'Blocaje Frontal Raso + Pase mano picado', 
+    secondaryContents: 'Blocaje lateral raso + Perfilamiento, control orientado y pase + reincorporación tras blocaje', 
+    description: '1. Coordinación en escalera (frontal-lateral) + Chut + Blocaje frontal raso\n2. Pase mano (Picado-alto-raso) identificar según altura y posición EDP\n3. Chut + blocaje lateral raso + Reincorporación tras Blocaje + Pase mano picado', 
+    variant: 'Cambiar lateralidad\nCambiar Blocaje lateral por perfilamiento, control y pase a mini portería',
+    duration: '15 minutos', 
+    category: 'TÉCNICA' 
+  }
+];
+
+const initialMessagesData = [
+  { id: 1, senderId: 1, text: '¡Hola equipo! He subido las nuevas fichas.', timestamp: '10:30' }
 ];
 
 const DEFAULT_SESSION_DATA = { 
@@ -514,10 +556,10 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
                       <div className="flex items-baseline gap-2 mb-0.5">
                         <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender?.name || 'User').split(' ')[0]}</span>
-                        <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp || '')}</span>
+                        <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp)}</span>
                       </div>
                       <div className={`px-3 py-2 rounded-2xl shadow-sm text-[10px] font-medium leading-relaxed ${isMe ? 'bg-blue-950 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                        {String(msg.text || '')}
+                        {String(msg.text)}
                       </div>
                    </div>
                 </div>
@@ -990,7 +1032,7 @@ function SessionBuilderView({ sessionCart, setSessionCart, sessionData, setSessi
             <h3 className="text-xl font-black text-blue-950 uppercase tracking-tighter mb-2">QR de la Sesión</h3>
             <p className="text-slate-500 font-medium text-xs mb-6">Muestra este código a tus porteros.</p>
             <div className="bg-slate-50 p-4 rounded-3xl inline-block border border-slate-200 mb-4">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://app.bibliokeepers.com/visor?sesion=${sessionData.sessionNumber}`)}`} alt="QR Code" className="w-[200px] h-[200px] object-contain rounded-xl mix-blend-multiply" />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`[https://app.bibliokeepers.com/visor?sesion=$](https://app.bibliokeepers.com/visor?sesion=$){sessionData.sessionNumber}`)}`} alt="QR Code" className="w-[200px] h-[200px] object-contain rounded-xl mix-blend-multiply" />
             </div>
             <p className="text-blue-950 font-black uppercase text-sm tracking-widest">{String(sessionData.team || '')}</p>
           </div>
@@ -1579,6 +1621,39 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
   );
 }
 
+function SessionsHistoryView({ savedSessions, onLoadSession, onDeleteSession, onCloneSession, onEvaluateSession }) {
+  return (
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in md:pb-10 pb-24 text-left">
+      <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div><h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">Mis Sesiones Guardadas</h3><p className="text-slate-500 text-sm mt-1">Historial de plantillas para reutilizar estructuras o evaluarlas.</p></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(!savedSessions || savedSessions.length === 0) ? (<div className="col-span-full p-10 text-center text-slate-300 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">Aún no has guardado ninguna plantilla</div>) : (
+          savedSessions.map((s, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col group">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FolderArchive size={20} /></div><div><h4 className="font-black text-blue-950 uppercase text-sm tracking-tight leading-tight">{String(s.name || '')}</h4><p className="text-xs font-medium text-slate-500 mt-1">Guardada el: {String(s.date || '')} • {s.cart?.filter(Boolean).length || 0} tareas</p></div></div>
+              </div>
+              <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center md:opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button onClick={() => onEvaluateSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 border border-yellow-100 shadow-sm flex-1" title="Evaluar Sesión"><MessageSquareQuote size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Evaluar</span></button>
+                   <button onClick={() => onCloneSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 border border-emerald-100 shadow-sm flex-1" title="Duplicar Sesión"><Copy size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Clonar</span></button>
+                   <button onClick={() => onLoadSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-blue-950 text-white rounded-xl hover:bg-blue-900 shadow-md flex-1" title="Editar Sesión"><Edit2 size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Editar</span></button>
+                   <button onClick={() => onDeleteSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 border border-red-100 shadow-sm flex-1" title="Eliminar"><Trash2 size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Borrar</span></button>
+              </div>
+              {s.rating && (
+                <div className="mt-4 bg-slate-50 rounded-2xl p-3 border border-slate-100 animate-in fade-in">
+                  <div className="flex items-center gap-1 mb-1"><Star size={12} fill="#eab308" className="text-yellow-500" /><span className="font-black text-xs text-blue-950">{s.rating}/10</span></div>
+                  {s.evaluationComment && <p className="text-[10px] text-slate-500 italic line-clamp-2">"{String(s.evaluationComment)}"</p>}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ChatView({ messages, onSendMessage, currentUser, users, onClose }) {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
@@ -1738,6 +1813,66 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
   );
 }
 
+function EvaluationModal({ session, squad, onClose, onSave, showToast }) {
+  const sessionGks = squad.filter(gk => session.data?.gkIds?.includes(gk.id));
+  const [rating, setRating] = useState(session.rating || 5);
+  const [comment, setComment] = useState(session.evaluationComment || '');
+  const [gkRatings, setGkRatings] = useState(session.gkRatings || sessionGks.reduce((acc, gk) => ({...acc, [gk.id]: 5}), {}));
+
+  const handleSave = () => {
+    onSave(session.id, rating, comment, gkRatings);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[400] flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative text-left animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"><X size={20}/></button>
+        <div className="flex items-center gap-3 mb-1 shrink-0">
+           <div className="w-10 h-10 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center border border-yellow-100"><MessageSquareQuote size={18}/></div>
+           <h3 className="text-xl font-black text-blue-950 uppercase tracking-tighter leading-none">Evaluar Sesión</h3>
+        </div>
+        <p className="text-slate-500 font-medium text-xs mb-6 truncate pl-13 shrink-0">{String(session.name || '')}</p>
+
+        <div className="overflow-y-auto flex-1 pr-2 space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota General de la Sesión</label>
+            <div className="flex items-center gap-4 mt-2">
+               <input type="range" min="1" max="10" value={rating} onChange={(e) => setRating(Number(e.target.value))} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500" />
+               <span className="w-10 text-center font-black text-blue-950 text-lg flex items-center justify-center gap-1 bg-yellow-50 p-2 rounded-xl text-yellow-600"><Star size={14} fill="currentColor"/>{rating}</span>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observaciones / Sensaciones</label>
+            <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="¿Cómo ha ido la sesión?..." className="w-full p-4 mt-2 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-24 resize-none text-xs" />
+          </div>
+          {sessionGks.length > 0 && (
+             <div className="pt-4 border-t border-slate-100">
+               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Evaluación Individual</h4>
+               <div className="space-y-4">
+                  {sessionGks.map(gk => (
+                     <div key={gk.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <div className="flex items-center gap-3 mb-3">
+                           <img src={gk.avatar} className="w-8 h-8 rounded-full object-cover border border-slate-200" alt="avatar" />
+                           <span className="text-xs font-black text-blue-950 uppercase">{String(gk.name || '')}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                           <span className="text-[10px] font-bold text-slate-400">Nota:</span>
+                           <input type="range" min="1" max="10" value={gkRatings[gk.id]} onChange={(e) => setGkRatings({...gkRatings, [gk.id]: Number(e.target.value)})} className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+                           <span className="w-6 text-center font-black text-blue-950 text-sm">{gkRatings[gk.id]}</span>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+             </div>
+          )}
+        </div>
+        <button onClick={handleSave} className="w-full py-4 mt-6 shrink-0 rounded-2xl font-black text-white bg-blue-950 hover:bg-blue-900 shadow-lg uppercase text-xs tracking-widest transition-colors">Guardar Evaluación</button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [fbUser, setFbUser] = useState(null);
@@ -1769,7 +1904,8 @@ export default function App() {
   const [sessionToDelete, setSessionToDelete] = useState(null);
   const [evaluatingSession, setEvaluatingSession] = useState(null); 
   const [attendanceSession, setAttendanceSession] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(1);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevMessagesLength = useRef(0);
   const [toasts, setToasts] = useState([]);
   const [sessionData, setSessionData] = useState({ ...DEFAULT_SESSION_DATA });
 
@@ -1793,13 +1929,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (isChatOpen) setUnreadCount(0);
-  }, [isChatOpen]);
-
-  useEffect(() => {
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && !isChatOpen && String(lastMsg.senderId) !== String(currentUser?.id)) {
-      setUnreadCount(prev => prev + 1);
+    if (isChatOpen) {
+      setUnreadCount(0);
+      prevMessagesLength.current = messages.length;
+    } else {
+      const newMessagesCount = messages.length - prevMessagesLength.current;
+      if (newMessagesCount > 0) {
+        const newMsgs = messages.slice(prevMessagesLength.current);
+        const unread = newMsgs.filter(m => String(m.senderId) !== String(currentUser?.id)).length;
+        if (unread > 0) {
+           setUnreadCount(prev => prev + unread);
+        }
+      }
+      prevMessagesLength.current = messages.length;
     }
   }, [messages, isChatOpen, currentUser]);
 
@@ -1907,6 +2049,23 @@ export default function App() {
      await deleteDoc(getDocRef('tasks', task.id));
      showToast("Tarea eliminada para siempre", "success");
   };
+
+  // --- FUNCIONES RESTAURADAS QUE FALTABAN ---
+  const toggleFavorite = async (taskId, e) => {
+    e.stopPropagation();
+    const task = tasks.find(t => String(t.id) === String(taskId));
+    if(!task) return;
+    const likes = task.likes || [];
+    const newLikes = likes.includes(liveUser.username) ? likes.filter(u => u !== liveUser.username) : [...likes, liveUser.username];
+    await updateDoc(getDocRef('tasks', taskId), { likes: newLikes });
+  };
+  
+  const handleCloneTask = async (task) => {
+    const cloned = { ...task, id: `clone-${Date.now()}`, title: `${task.title} (Copia)`, mainObjective: `${task.mainObjective} (Copia)`, author: { name: liveUser.name, avatar: liveUser.avatar }, likes: [], comments: [] };
+    await setDoc(getDocRef('tasks', cloned.id), cleanData(cloned));
+    showToast("Tarea duplicada correctamente");
+  };
+  // -------------------------------------------
   
   const handleSaveGk = async (gkData) => await setDoc(getDocRef('goalkeepers', gkData.id), cleanData(gkData));
   const handleDeleteGk = async (id) => await deleteDoc(getDocRef('goalkeepers', id));
@@ -2011,7 +2170,7 @@ export default function App() {
     setActiveTab(item.id); setEditingTask(null);
   };
 
-  const handleLogout = () => { setCurrentUser(null); setActiveTab('home'); setIsChatOpen(false); setIsAIOpen(false); setEditingTask(null); setSessionCart([null, null, null, null]); setSessionData({ ...DEFAULT_SESSION_DATA }); setUnreadCount(1); };
+  const handleLogout = () => { setCurrentUser(null); setActiveTab('home'); setIsChatOpen(false); setIsAIOpen(false); setEditingTask(null); setSessionCart([null, null, null, null]); setSessionData({ ...DEFAULT_SESSION_DATA }); setUnreadCount(0); };
   
   const loadSession = (session) => { 
     setSessionData(session.data); 
