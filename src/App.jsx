@@ -47,54 +47,13 @@ const getColl = (name) => collection(db, 'artifacts', appId, 'public', 'data', n
 const getDocRef = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, String(id));
 
 // --- 1. DATOS INICIALES Y CONFIGURACIÓN ---
-const LOGO_ATM_URL = "https://upload.wikimedia.org/wikipedia/en/thumb/f/f4/Atletico_Madrid_2017_logo.svg/1200px-Atletico_Madrid_2017_logo.svg.png";
+const LOGO_ATM_URL = "/escudo.PNG"; 
 const FALLBACK_LOGO = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231a2b56"/><text x="50" y="55" font-family="sans-serif" font-size="20" fill="white" font-weight="bold" text-anchor="middle">ATM</text></svg>`;
-const FALLBACK_IMG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="%23ffffff"/><text x="300" y="200" font-family="sans-serif" font-size="20" fill="%23cc2b2b" text-anchor="middle">Gráfico de Tarea</text></svg>`;
+const FALLBACK_IMG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="%23ffffff"/><text x="300" y="200" font-family="sans-serif" font-size="20" fill="%23cc2b2b" text-anchor="middle">Gráfico</text></svg>`;
 
 const mockUsersInitial = [
   { id: 1, name: 'Admin Principal', username: 'admin', password: '123', role: 'admin', avatar: 'https://ui-avatars.com/api/?name=Admin+ATM&background=0A1C40&color=fff', active: true },
   { id: 2, name: 'Diego Pablo Simeone', username: 'cholo', password: '123', role: 'coach', avatar: 'https://ui-avatars.com/api/?name=Diego+Simeone&background=CB3524&color=fff', active: true },
-  { id: 3, name: 'Germán Burgos', username: 'mono', password: '123', role: 'coach', avatar: 'https://ui-avatars.com/api/?name=German+Burgos&background=64748b&color=fff', active: true },
-];
-
-const initialTasksData = [
-  {
-    id: 'ej-1',
-    title: 'Blocaje Lateral Raso Estático',
-    source: 'Sesión Extraída',
-    mainObjective: 'Blocaje Lateral Raso Estático',
-    secondaryContents: 'Caída lateral en estático + perfilamiento',
-    description: 'Trabajo individual caída lateral en estático\n1. Blocaje lateral raso lado derecho\n2. Blocaje lateral raso lado izquierdo',
-    variant: 'Sin variante',
-    duration: '10 minutos',
-    category: 'TÉCNICA',
-    imageUrl: FALLBACK_IMG,
-    author: { name: 'Diego Pablo Simeone', avatar: 'https://ui-avatars.com/api/?name=Diego+Simeone&background=CB3524&color=fff' },
-    likes: ['cholo'],
-    comments: [],
-    visibility: 'public'
-  }
-];
-
-const initialGoalkeepers = [
-  { id: 'gk-1', name: 'Jorge Santiago', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Jorge+Santiago&background=0D8ABC&color=fff', stats: { reflexes: 8, aerial: 5, oneVone: 7, blocking: 9, footwork: 6 }, history: [{date: '01/04/2026', rating: 8, comment: 'Buen entreno'}, {date: '08/04/2026', rating: 9, comment: 'Excelente blocaje'}] },
-  { id: 'gk-2', name: 'Francisco Redondo', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Francisco+Redondo&background=4CAF50&color=fff', stats: { reflexes: 7, aerial: 6, oneVone: 8, blocking: 7, footwork: 7 }, history: [{date: '01/04/2026', rating: 6, comment: 'Falta reacción'}, {date: '08/04/2026', rating: 7, comment: 'Mejorando'}] },
-  { id: 'gk-3', name: 'Alejandro Iglesias', year: '2011', category: 'Infantil A', assignedCoach: 'mono', avatar: 'https://ui-avatars.com/api/?name=Alejandro+Iglesias&background=E53935&color=fff', stats: { reflexes: 9, aerial: 7, oneVone: 8, blocking: 6, footwork: 5 }, history: [{date: '01/04/2026', rating: 9, comment: 'Brillante'}] }
-];
-
-const mockOcrDatabase = [
-  { 
-    mainObjective: 'Blocaje Frontal Raso + Pase mano picado', 
-    secondaryContents: 'Blocaje lateral raso + Perfilamiento, control orientado y pase + reincorporación tras blocaje', 
-    description: '1. Coordinación en escalera (frontal-lateral) + Chut + Blocaje frontal raso\n2. Pase mano (Picado-alto-raso) identificar según altura y posición EDP\n3. Chut + blocaje lateral raso + Reincorporación tras Blocaje + Pase mano picado', 
-    variant: 'Cambiar lateralidad\nCambiar Blocaje lateral por perfilamiento, control y pase a mini portería',
-    duration: '15 minutos', 
-    category: 'TÉCNICA' 
-  }
-];
-
-const initialMessagesData = [
-  { id: 1, senderId: 1, text: '¡Hola equipo! He subido las nuevas fichas.', timestamp: '10:30' }
 ];
 
 const DEFAULT_SESSION_DATA = { 
@@ -109,8 +68,10 @@ const DEFAULT_SESSION_DATA = {
   observaciones: '• Tarea-1: Blocar correctamente y reincorporar con fuerza para realizar barrida en el 1vs1\n• Tarea-2: Incidir en atacar el balón con valentía, sin dudar y evitar las segundas jugadas'
 };
 
-// --- COMPONENTES SECUNDARIOS ---
+// --- LIMPIADOR DE DATOS FIREBASE ---
+const cleanData = (obj) => JSON.parse(JSON.stringify(obj));
 
+// --- COMPONENTES SECUNDARIOS ---
 function RadarChart({ stats, className = "w-full h-full" }) {
   const statKeys = ['reflexes', 'aerial', 'oneVone', 'blocking', 'footwork'];
   const labels = ['REF', 'AER', '1v1', 'BLOC', 'PIE'];
@@ -549,14 +510,14 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
               const isMe = String(msg.senderId) === String(currentUser?.id);
               return (
                 <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                   <img src={sender.avatar} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/>
+                   <img src={sender.avatar || FALLBACK_LOGO} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/>
                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
                       <div className="flex items-baseline gap-2 mb-0.5">
-                        <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender.name).split(' ')[0]}</span>
-                        <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp)}</span>
+                        <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender?.name || 'User').split(' ')[0]}</span>
+                        <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp || '')}</span>
                       </div>
                       <div className={`px-3 py-2 rounded-2xl shadow-sm text-[10px] font-medium leading-relaxed ${isMe ? 'bg-blue-950 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                        {String(msg.text)}
+                        {String(msg.text || '')}
                       </div>
                    </div>
                 </div>
@@ -1618,6 +1579,85 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
   );
 }
 
+function ChatView({ messages, onSendMessage, currentUser, users, onClose }) {
+  const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const handleSend = (e) => {
+    e.preventDefault(); if (!newMessage.trim()) return;
+    onSendMessage(String(newMessage));
+    setNewMessage('');
+  };
+
+  return (
+    <div className="w-[360px] h-[550px] max-h-[80vh] flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
+      <div className="bg-blue-950 p-4 text-white flex justify-between items-center shrink-0">
+         <div className="flex items-center gap-3"><div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><MessageSquare size={20} className="text-blue-200"/></div><div className="text-left"><h3 className="text-base font-black uppercase italic tracking-tighter leading-tight">Chat Departamento de Porteros</h3><p className="text-blue-300 text-[10px] font-medium mt-1">En línea</p></div></div>
+         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-full md:hidden"><X size={16} /></button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+        {messages.map(msg => {
+          const sender = users.find(u => String(u.id) === String(msg.senderId)) || { name: 'Desconocido', avatar: '' };
+          const isMe = String(msg.senderId) === String(currentUser?.id);
+          return (
+            <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}><img src={sender.avatar || FALLBACK_LOGO} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/><div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
+              <div className="flex items-baseline gap-2 mb-0.5">
+                <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender?.name || 'User').split(' ')[0]}</span>
+                <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp)}</span>
+              </div>
+              <div className={`px-3 py-2 rounded-2xl shadow-sm text-[10px] font-medium leading-relaxed ${isMe ? 'bg-blue-950 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
+                {String(msg.text)}
+              </div>
+            </div></div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="p-3 bg-white border-t border-slate-200 shrink-0">
+        <form onSubmit={handleSend} className="flex items-center gap-2">
+          <input type="text" className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-full outline-none focus:ring-2 focus:ring-blue-950 font-medium text-xs" placeholder="Mensaje..." value={newMessage} onChange={e => setNewMessage(e.target.value)} />
+          <button type="submit" disabled={!newMessage.trim()} className="w-10 h-10 bg-red-600 hover:bg-red-700 disabled:bg-slate-200 text-white rounded-full flex items-center justify-center"><Send size={16} className="ml-0.5" /></button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function LoginView({ users, onLogin }) {
+  const [u, setU] = useState('');
+  const [p, setP] = useState('');
+  const [error, setError] = useState('');
+  
+  const submit = (e) => {
+    e.preventDefault();
+    const user = users.find(x => String(x.username) === String(u) && String(x.password) === String(p));
+    if (user) { 
+      if(!user.active) return setError("Cuenta desactivada."); 
+      onLogin(user); 
+    } else {
+      setError("Usuario o contraseña incorrectos");
+    }
+  };
+  
+  return (
+    <div className="h-screen w-full bg-blue-950 flex items-center justify-center px-4 relative overflow-hidden text-center">
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(203,53,36,0.1),transparent_80%)] pointer-events-none"></div>
+      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[3rem] border border-white/20 shadow-2xl max-w-sm w-full flex flex-col items-center z-10">
+        <img src={LOGO_ATM_URL} className="h-24 mb-6 drop-shadow-xl" alt="ATM" onError={(e)=>e.target.src=FALLBACK_LOGO}/>
+        <h1 className="text-white text-2xl font-black italic uppercase mb-8 tracking-tighter">BiblioKeepers <span className="text-red-500">ATM</span></h1>
+        <form onSubmit={submit} className="w-full space-y-4">
+          <input type="text" placeholder="Usuario" className="w-full p-4 rounded-2xl bg-white/10 text-white border border-white/10 outline-none focus:ring-2 focus:ring-red-500" value={u} onChange={e=>setU(e.target.value)}/>
+          <input type="password" placeholder="Contraseña" className="w-full p-4 rounded-2xl bg-white/10 text-white border border-white/10 outline-none focus:ring-2 focus:ring-red-500" value={p} onChange={e=>setP(e.target.value)}/>
+          {error && <p className="text-red-400 text-xs font-bold text-center">{String(error)}</p>}
+          <button type="submit" className="w-full bg-red-600 text-white font-black py-4 rounded-2xl hover:bg-red-700 uppercase tracking-widest shadow-lg">Entrar</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function AdminView({ users, onSaveUser, onToggleUserActive }) {
   const [isModal, setIsModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
@@ -1698,42 +1738,10 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
   );
 }
 
-function LoginView({ users, onLogin }) {
-  const [u, setU] = useState('');
-  const [p, setP] = useState('');
-  const [error, setError] = useState('');
-  
-  const submit = (e) => {
-    e.preventDefault();
-    const user = users.find(x => String(x.username) === String(u) && String(x.password) === String(p));
-    if (user) { 
-      if(!user.active) return setError("Cuenta desactivada."); 
-      onLogin(user); 
-    } else {
-      setError("Usuario o contraseña incorrectos");
-    }
-  };
-  
-  return (
-    <div className="h-screen w-full bg-blue-950 flex items-center justify-center px-4 relative overflow-hidden text-center">
-      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(203,53,36,0.1),transparent_80%)] pointer-events-none"></div>
-      <div className="bg-white/10 backdrop-blur-xl p-10 rounded-[3rem] border border-white/20 shadow-2xl max-w-sm w-full flex flex-col items-center z-10">
-        <img src={LOGO_ATM_URL} className="h-24 mb-6 drop-shadow-xl" alt="ATM" onError={(e)=>e.target.src=FALLBACK_LOGO}/>
-        <h1 className="text-white text-2xl font-black italic uppercase mb-8 tracking-tighter">BiblioKeepers <span className="text-red-500">ATM</span></h1>
-        <form onSubmit={submit} className="w-full space-y-4">
-          <input type="text" placeholder="Usuario" className="w-full p-4 rounded-2xl bg-white/10 text-white border border-white/10 outline-none focus:ring-2 focus:ring-red-500" value={u} onChange={e=>setU(e.target.value)}/>
-          <input type="password" placeholder="Contraseña" className="w-full p-4 rounded-2xl bg-white/10 text-white border border-white/10 outline-none focus:ring-2 focus:ring-red-500" value={p} onChange={e=>setP(e.target.value)}/>
-          {error && <p className="text-red-400 text-xs font-bold text-center">{String(error)}</p>}
-          <button type="submit" className="w-full bg-red-600 text-white font-black py-4 rounded-2xl hover:bg-red-700 uppercase tracking-widest shadow-lg">Entrar</button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [fbUser, setFbUser] = useState(null);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   // --- ESTADOS REACTIVOS ---
   const [users, setUsers] = useState([]);
@@ -1774,6 +1782,14 @@ export default function App() {
   useEffect(() => {
     const script1 = document.createElement('script'); script1.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; script1.async = true; document.body.appendChild(script1);
     const script2 = document.createElement('script'); script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; script2.async = true; document.body.appendChild(script2);
+    
+    // PWA Install Prompt Listener
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   useEffect(() => {
@@ -1782,7 +1798,7 @@ export default function App() {
 
   useEffect(() => {
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg && !isChatOpen && lastMsg.senderId != currentUser?.id) {
+    if (lastMsg && !isChatOpen && String(lastMsg.senderId) !== String(currentUser?.id)) {
       setUnreadCount(prev => prev + 1);
     }
   }, [messages, isChatOpen, currentUser]);
@@ -1874,10 +1890,10 @@ export default function App() {
   }, [fbUser]);
 
   // --- FIREBASE HANDLERS ---
-  const handleSaveUser = async (user) => await setDoc(getDocRef('users', user.id), user);
+  const handleSaveUser = async (user) => await setDoc(getDocRef('users', user.id), cleanData(user));
   const handleToggleUserActive = async (id, active) => await updateDoc(getDocRef('users', id), { active });
   
-  const handleSaveTask = async (task) => await setDoc(getDocRef('tasks', task.id), task, { merge: true });
+  const handleSaveTask = async (task) => await setDoc(getDocRef('tasks', task.id), cleanData(task), { merge: true });
   
   const handleTrashTask = async (taskId) => {
      await updateDoc(getDocRef('tasks', taskId), { trashed: true });
@@ -1892,12 +1908,17 @@ export default function App() {
      showToast("Tarea eliminada para siempre", "success");
   };
   
-  const handleSaveGk = async (gkData) => await setDoc(getDocRef('goalkeepers', gkData.id), gkData);
+  const handleSaveGk = async (gkData) => await setDoc(getDocRef('goalkeepers', gkData.id), cleanData(gkData));
   const handleDeleteGk = async (id) => await deleteDoc(getDocRef('goalkeepers', id));
 
   const handleSaveTemplate = async (session) => {
-    await setDoc(getDocRef('sessions', session.id), session);
-    showToast("Plantilla guardada en la nube.");
+    try {
+        await setDoc(getDocRef('sessions', session.id), cleanData(session));
+        showToast("Plantilla guardada en la nube.");
+    } catch(e) {
+        console.error("Error al guardar la sesión:", e);
+        showToast("Error guardando sesión. Comprueba que todos los campos estén llenos.", "error");
+    }
   };
   const handleTrashSession = async (sessionId) => {
     await updateDoc(getDocRef('sessions', sessionId), { trashed: true });
@@ -1913,17 +1934,17 @@ export default function App() {
   };
   const handleCloneSession = async (session) => {
     const cloned = { ...session, id: Date.now().toString(), name: `${session.name} (Copia)`, date: new Date().toLocaleDateString() };
-    await setDoc(getDocRef('sessions', cloned.id), cloned);
+    await setDoc(getDocRef('sessions', cloned.id), cleanData(cloned));
     showToast("Sesión duplicada correctamente");
   };
   const handleSaveEvaluation = async (sessionId, rating, comment, gkRatings) => {
-    await updateDoc(getDocRef('sessions', sessionId), { rating, evaluationComment: comment, gkRatings });
+    await updateDoc(getDocRef('sessions', sessionId), { rating, evaluationComment: comment, gkRatings: cleanData(gkRatings) });
     if(gkRatings) {
        for(let gkId in gkRatings) {
           const gk = squad.find(g => String(g.id) === String(gkId));
           if(gk) {
              const newHistory = [...(gk.history||[]), { sessionId, date: new Date().toLocaleDateString(), rating: gkRatings[gkId], comment }];
-             await updateDoc(getDocRef('goalkeepers', gkId), { history: newHistory });
+             await updateDoc(getDocRef('goalkeepers', gkId), { history: cleanData(newHistory) });
           }
        }
     }
@@ -1933,18 +1954,18 @@ export default function App() {
   const handleAddEvent = async (dateString, session) => {
     const existing = calendarEventsState[dateString] || [];
     if(!existing.find(s => String(s.id) === String(session.id))) {
-       await setDoc(getDocRef('calendarEvents', dateString), { events: [...existing, session] }, { merge: true });
+       await setDoc(getDocRef('calendarEvents', dateString), { events: cleanData([...existing, session]) }, { merge: true });
     }
   };
   const handleRemoveEvent = async (dateString, sessionId) => {
     const existing = calendarEventsState[dateString] || [];
-    await setDoc(getDocRef('calendarEvents', dateString), { events: existing.filter(s => String(s.id) !== String(sessionId)) }, { merge: true });
+    await setDoc(getDocRef('calendarEvents', dateString), { events: cleanData(existing.filter(s => String(s.id) !== String(sessionId))) }, { merge: true });
     showToast("Sesión desasignada del día");
   };
   const handleSaveAttendance = async (eventId, dateString, attendanceMap) => {
     const existing = calendarEventsState[dateString] || [];
     const newEvents = existing.map(s => String(s.id) === String(eventId) ? { ...s, attendance: attendanceMap } : s);
-    await setDoc(getDocRef('calendarEvents', dateString), { events: newEvents }, { merge: true });
+    await setDoc(getDocRef('calendarEvents', dateString), { events: cleanData(newEvents) }, { merge: true });
     showToast("Asistencia guardada con éxito");
   };
 
@@ -2016,6 +2037,19 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {deferredPrompt && (
+        <div className="fixed bottom-24 left-4 right-4 md:bottom-8 md:left-auto md:right-[5.5rem] bg-white p-4 rounded-2xl shadow-2xl z-[8000] flex items-center justify-between gap-4 border-2 border-blue-900 animate-in slide-in-from-bottom-10">
+          <div className="flex items-center gap-3">
+            <img src="/bibliokeepers.PNG" className="w-10 h-10 rounded-xl shadow-sm border border-slate-100" alt="icon" onError={(e) => { e.target.src = FALLBACK_LOGO; }}/>
+            <div className="text-left">
+               <p className="font-black text-sm leading-tight text-blue-950 uppercase tracking-tighter">Instalar App</p>
+               <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Añadir a pantalla de inicio</p>
+            </div>
+          </div>
+          <button onClick={() => { deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => setDeferredPrompt(null)); }} className="bg-red-600 px-4 py-3 rounded-xl font-black text-white text-[10px] uppercase tracking-widest shadow-lg hover:bg-red-700">Instalar</button>
+        </div>
+      )}
 
       <aside className="hidden md:flex w-64 bg-blue-950 text-white flex-col shadow-2xl z-20 border-r border-blue-900 shrink-0">
         <div className="p-8 border-b border-blue-900/50 flex items-center gap-4">
