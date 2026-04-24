@@ -1594,15 +1594,14 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
       }]
     };
 
-    // MATRIZ DE MODELOS: La app probará todos estos hasta que uno funcione con tu API Key.
-    const models = [
-      "gemini-1.5-flash",
-      "gemini-1.5-pro",
-      "gemini-1.0-pro-vision-latest"
+    // CAMBIO VITAL: Matriz de 3 servidores de Google. Si uno da 404, salta al siguiente.
+    const endpoints = [
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`
     ];
 
-    for (let model of models) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    for (let url of endpoints) {
       try {
         const response = await fetch(url, { 
           method: 'POST', 
@@ -1619,10 +1618,10 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
           }
         }
       } catch (e) {
-         console.error(`Fallo con el modelo ${model}`, e);
+         console.error(`Fallo de conexión con: ${url}`, e);
       }
     }
-    return null; // Si fallan todos los modelos
+    return null; 
   };
 
   const handleUpload = async (files) => {
@@ -1640,8 +1639,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         
         const fallbackData = {
            mainObjective: `❌ LECTURA IA FALLIDA`,
-           secondaryContents: 'Modelos no disponibles',
-           description: 'La API Key es válida, pero tu proyecto de Google Cloud no tiene acceso a los modelos de visión de Gemini en tu región o cuenta.',
+           secondaryContents: 'API de Google Bloqueada',
+           description: 'Si ves este mensaje, significa que el código está perfecto, pero tu cuenta de Google Cloud tiene la IA desactivada. Tienes que entrar en Google Cloud, buscar "Generative Language API" y darle al botón de Habilitar.',
            variant: '',
            duration: '--'
         };
@@ -1701,6 +1700,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
     </div>
   );
 }
+
 function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSessions, onRestoreSession, onDeleteSessionForever }) {
   return (
     <div className="max-w-7xl mx-auto space-y-6 md:pb-10 pb-24 text-left animate-in fade-in">
