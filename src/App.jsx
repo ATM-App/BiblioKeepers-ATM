@@ -1542,48 +1542,58 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   const [visibility, setVisibility] = useState('public');
   const fileInputRef = useRef(null);
 
-  const getBase64 = (file) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file); });
+  const getBase64 = (file) => new Promise((resolve) => { 
+    const reader = new FileReader(); 
+    reader.onload = () => resolve(reader.result); 
+    reader.readAsDataURL(file); 
+  });
   
   const extractDataFromImage = async (base64Image) => {
+    // Tu clave API correcta
     const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
+    // Usamos el modelo estable
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const base64Data = base64Image.split(',')[1];
-    const mimeType = base64Image.match(/data:(.*?);/)[1] || "image/png";
+    const mimeType = base64Image.match(/data:(.*?);/)[1] || "image/jpeg";
 
+    // Petición simplificada sin "generationConfig" para evitar errores 400 del servidor
     const payload = {
       contents: [{
         role: "user",
         parts: [
-          { text: "Extrae la información de esta ficha de entrenamiento de fútbol. Completa exactamente los campos en formato JSON: 'mainObjective' (Objetivo principal), 'secondaryContents' (Contenidos secundarios), 'description' (Descripción detallada con todos los pasos numéricos), 'variant' (Variante o Variantes), 'duration' (Duración en minutos). Si algún campo no aparece, devuélvelo vacío." },
+          { text: "Eres un asistente experto. Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional ni formato markdown. Las claves exactas deben ser: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'. Si un campo no aparece en la imagen, déjalo vacío." },
           { inlineData: { mimeType: mimeType, data: base64Data } }
         ]
-      }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            mainObjective: { type: "STRING" },
-            secondaryContents: { type: "STRING" },
-            description: { type: "STRING" },
-            variant: { type: "STRING" },
-            duration: { type: "STRING" }
-          }
-        }
-      }
+      }]
     };
 
-    const delays = [1000, 2000, 4000, 8000, 16000];
-    for (let attempt = 0; attempt <= 5; attempt++) {
+    const delays = [1000, 2000, 4000];
+    for (let attempt = 0; attempt < delays.length; attempt++) {
       try {
-        const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        if (!response.ok) throw new Error("API Error");
+        const response = await fetch(url, { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(payload) 
+        });
+        
+        if (!response.ok) {
+           const errText = await response.text();
+           console.error("Fallo en Gemini API:", errText);
+           throw new Error("API Error");
+        }
+        
         const result = await response.json();
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) return JSON.parse(text);
+        let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (text) {
+           // Limpiador robusto para asegurar que React pueda leer el JSON
+           text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+           return JSON.parse(text);
+        }
         return null;
       } catch (error) {
-        if (attempt === 5) { console.error("Error al extraer texto de la imagen"); return null; }
+        console.error(`Intento de IA ${attempt + 1} fallido:`, error);
+        if (attempt === delays.length - 1) return null;
         await new Promise(r => setTimeout(r, delays[attempt]));
       }
     }
@@ -1599,7 +1609,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         const cropWidth = img.width - cropX;
         canvas.width = cropWidth; canvas.height = img.height;
         ctx.drawImage(img, cropX, 0, cropWidth, img.height, 0, 0, cropWidth, img.height);
-        resolve(canvas.toDataURL('image/png', 1.0));
+        // Usamos JPEG para máxima compatibilidad con la IA
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
       };
       img.src = URL.createObjectURL(file);
     });
@@ -1614,22 +1625,33 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         const fullBase64 = await getBase64(files[i]);
         const croppedUrl = await cropImageReal(files[i]);
         const ocrData = await extractDataFromImage(fullBase64);
-        // 4. CAMBIO IMPORTANTE: Mensaje de error real en vez de tarea falsa
+        
         const fallbackData = {
            mainObjective: `❌ LECTURA IA FALLIDA`,
-           secondaryContents: 'Falta API Key o error de red',
-           description: 'Error al conectar con la Inteligencia Artificial de Google.',
-           variant: 'Revisa la conexión o la cuota de tu API Key.',
+           secondaryContents: 'El sistema no pudo procesar el texto',
+           description: 'La imagen se ha recortado y guardado correctamente, pero no se pudo leer el texto. Haz clic en el botón del lápiz para editar esta tarea e introducir los textos a mano.',
+           variant: '',
            duration: '--'
         };
+        
         const finalData = ocrData || fallbackData;
+        
         extractedTasks.push({ 
-          ...finalData, id: `ext-${Date.now()}-${i}`, title: finalData.mainObjective || 'Tarea sin título', 
-          imageUrl: croppedUrl, visibility: visibility, category: 'TÉCNICA', author: { name: currentUser.name, avatar: currentUser.avatar }, likes: [], isAutoCropped: true 
+          ...finalData, 
+          id: `ext-${Date.now()}-${i}`, 
+          title: finalData.mainObjective || 'Tarea sin título', 
+          imageUrl: croppedUrl, 
+          visibility: visibility, 
+          category: 'TÉCNICA', 
+          author: { name: currentUser.name, avatar: currentUser.avatar }, 
+          likes: [], 
+          isAutoCropped: true 
         });
       } catch (err) { console.error("Error procesando fichero", err); }
     }
-    setIsProcessing(false); onTasksExtracted(extractedTasks); showToast(`Se han procesado ${extractedTasks.length} tareas correctamente`);
+    setIsProcessing(false); 
+    onTasksExtracted(extractedTasks); 
+    showToast(`Se han procesado ${extractedTasks.length} tareas correctamente`);
   };
 
   return (
