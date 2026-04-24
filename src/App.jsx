@@ -1546,7 +1546,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   
   const extractDataFromImage = async (base64Image) => {
     const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const base64Data = base64Image.split(',')[1];
     const mimeType = base64Image.match(/data:(.*?);/)[1] || "image/png";
 
@@ -1614,7 +1614,14 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         const fullBase64 = await getBase64(files[i]);
         const croppedUrl = await cropImageReal(files[i]);
         const ocrData = await extractDataFromImage(fullBase64);
-        const fallbackData = mockOcrDatabase[i % mockOcrDatabase.length];
+        // 4. CAMBIO IMPORTANTE: Mensaje de error real en vez de tarea falsa
+        const fallbackData = {
+           mainObjective: `❌ LECTURA IA FALLIDA`,
+           secondaryContents: 'Falta API Key o error de red',
+           description: 'Error al conectar con la Inteligencia Artificial de Google.',
+           variant: 'Revisa la conexión o la cuota de tu API Key.',
+           duration: '--'
+        };
         const finalData = ocrData || fallbackData;
         extractedTasks.push({ 
           ...finalData, id: `ext-${Date.now()}-${i}`, title: finalData.mainObjective || 'Tarea sin título', 
