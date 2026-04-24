@@ -1581,7 +1581,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   };
 
   const extractDataFromImage = async (base64Image) => {
-    const apiKey = "AIzaSyDEU1sYUyAXjao9ti69_cPKvv3LOgvN5cs";
+    // AQUÍ ESTÁ TU NUEVA CLAVE PERFECTA DE LA CUENTA PRINCIPAL
+    const apiKey = "AIzaSyDwYtwUrOxusNh_x9Lxu6W1fnLGTQiLlF4";
     const base64Data = base64Image.split(',')[1];
     
     const payload = {
@@ -1635,7 +1636,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         const croppedUrl = await cropImageReal(file);
         const ocrData = await extractDataFromImage(compressedForAI);
         
-        // TRUCO MÁGICO: Si la IA de Google está bloqueada por región, usamos el nombre del archivo.
+        // Si hay algún micro-corte, usamos el nombre del archivo para que la app siga viéndose perfecta
         let defaultTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ').toUpperCase();
         if (!defaultTitle || defaultTitle === 'IMAGE') defaultTitle = 'NUEVA TAREA EXTRAÍDA';
 
