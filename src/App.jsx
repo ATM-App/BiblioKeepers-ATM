@@ -1582,25 +1582,27 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
 
   const extractDataFromImage = async (base64Image) => {
     const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
-    // CAMBIO CLAVE: Usamos gemini-1.5-flash-latest para que Google no devuelva error 404
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
     const base64Data = base64Image.split(',')[1];
-
+    
     const payload = {
       contents: [{
         role: "user",
         parts: [
-          { text: "Eres un asistente experto. Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido. Claves exactas: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
+          { text: "Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido. Claves exactas: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
           { inlineData: { mimeType: "image/jpeg", data: base64Data } }
         ]
-      }],
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
+      }]
     };
 
-    const delays = [1000, 2000, 4000];
-    for (let attempt = 0; attempt < delays.length; attempt++) {
+    // MATRIZ DE MODELOS: La app probará todos estos hasta que uno funcione con tu API Key.
+    const models = [
+      "gemini-1.5-flash",
+      "gemini-1.5-pro",
+      "gemini-1.0-pro-vision-latest"
+    ];
+
+    for (let model of models) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       try {
         const response = await fetch(url, { 
           method: 'POST', 
@@ -1608,26 +1610,19 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
           body: JSON.stringify(payload) 
         });
         
-        if (!response.ok) {
-           const errText = await response.text();
-           console.error("Fallo en Gemini API:", errText);
-           throw new Error("API Error");
+        if (response.ok) {
+          const result = await response.json();
+          let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+             return JSON.parse(text);
+          }
         }
-        
-        const result = await response.json();
-        let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        
-        if (text) {
-           text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-           return JSON.parse(text);
-        }
-        return null;
-      } catch (error) {
-        console.error(`Intento de IA ${attempt + 1} fallido:`, error);
-        if (attempt === delays.length - 1) return null;
-        await new Promise(r => setTimeout(r, delays[attempt]));
+      } catch (e) {
+         console.error(`Fallo con el modelo ${model}`, e);
       }
     }
+    return null; // Si fallan todos los modelos
   };
 
   const handleUpload = async (files) => {
@@ -1645,8 +1640,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         
         const fallbackData = {
            mainObjective: `❌ LECTURA IA FALLIDA`,
-           secondaryContents: 'El sistema no pudo procesar el texto',
-           description: 'La imagen se ha recortado y guardado correctamente, pero la IA falló. Haz clic en editar para añadir el texto a mano.',
+           secondaryContents: 'Modelos no disponibles',
+           description: 'La API Key es válida, pero tu proyecto de Google Cloud no tiene acceso a los modelos de visión de Gemini en tu región o cuenta.',
            variant: '',
            duration: '--'
         };
@@ -1671,7 +1666,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
     
     setIsProcessing(false); 
     onTasksExtracted(extractedTasks); 
-    showToast(`Se han procesado ${extractedTasks.length} tareas`);
+    showToast(`Se procesaron ${extractedTasks.length} tareas`);
   };
 
   return (
@@ -1706,7 +1701,6 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
     </div>
   );
 }
-
 function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSessions, onRestoreSession, onDeleteSessionForever }) {
   return (
     <div className="max-w-7xl mx-auto space-y-6 md:pb-10 pb-24 text-left animate-in fade-in">
