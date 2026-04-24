@@ -1581,7 +1581,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   };
 
   const extractDataFromImage = async (base64Image) => {
-    const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
+    // AQUÍ ESTÁ TU NUEVA CLAVE PERFECTA
+    const apiKey = "AIzaSyDEU1sYUyAXjao9ti69_cPKvv3LOgvN5cs";
     const base64Data = base64Image.split(',')[1];
     
     const payload = {
@@ -1594,7 +1595,6 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
       }]
     };
 
-    // CAMBIO VITAL: Matriz de 3 servidores de Google. Si uno da 404, salta al siguiente.
     const endpoints = [
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -1639,8 +1639,8 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         
         const fallbackData = {
            mainObjective: `❌ LECTURA IA FALLIDA`,
-           secondaryContents: 'API de Google Bloqueada',
-           description: 'Si ves este mensaje, significa que el código está perfecto, pero tu cuenta de Google Cloud tiene la IA desactivada. Tienes que entrar en Google Cloud, buscar "Generative Language API" y darle al botón de Habilitar.',
+           secondaryContents: 'El sistema no pudo procesar el texto',
+           description: 'La imagen se ha recortado y guardado correctamente, pero la IA falló. Haz clic en editar para añadir el texto a mano.',
            variant: '',
            duration: '--'
         };
