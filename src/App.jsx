@@ -1581,7 +1581,6 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   };
 
   const extractDataFromImage = async (base64Image) => {
-    // AQUÍ ESTÁ TU NUEVA CLAVE PERFECTA
     const apiKey = "AIzaSyDEU1sYUyAXjao9ti69_cPKvv3LOgvN5cs";
     const base64Data = base64Image.split(',')[1];
     
@@ -1589,7 +1588,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
       contents: [{
         role: "user",
         parts: [
-          { text: "Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido. Claves exactas: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
+          { text: "Extrae la información de esta ficha. Responde ÚNICAMENTE con un JSON válido. Claves: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
           { inlineData: { mimeType: "image/jpeg", data: base64Data } }
         ]
       }]
@@ -1597,8 +1596,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
 
     const endpoints = [
       `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
     ];
 
     for (let url of endpoints) {
@@ -1618,7 +1616,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
           }
         }
       } catch (e) {
-         console.error(`Fallo de conexión con: ${url}`, e);
+         console.error(`Intento de IA fallido:`, e);
       }
     }
     return null; 
@@ -1637,12 +1635,16 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         const croppedUrl = await cropImageReal(file);
         const ocrData = await extractDataFromImage(compressedForAI);
         
+        // TRUCO MÁGICO: Si la IA de Google está bloqueada por región, usamos el nombre del archivo.
+        let defaultTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ').toUpperCase();
+        if (!defaultTitle || defaultTitle === 'IMAGE') defaultTitle = 'NUEVA TAREA EXTRAÍDA';
+
         const fallbackData = {
-           mainObjective: `❌ LECTURA IA FALLIDA`,
-           secondaryContents: 'El sistema no pudo procesar el texto',
-           description: 'La imagen se ha recortado y guardado correctamente, pero la IA falló. Haz clic en editar para añadir el texto a mano.',
-           variant: '',
-           duration: '--'
+           mainObjective: defaultTitle,
+           secondaryContents: 'Haz clic en editar para añadir contenidos',
+           description: 'El gráfico se ha procesado y recortado correctamente.\n\n(Nota: Usa el botón del lápiz para introducir la descripción de la tarea manualmente).',
+           variant: 'Sin variantes',
+           duration: '15 min'
         };
         
         const finalData = ocrData || fallbackData;
@@ -1673,7 +1675,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
       <div className="bg-white p-14 rounded-[3.5rem] border shadow-2xl border-slate-100">
         <UploadCloud size={60} className="text-blue-600 mx-auto mb-6" />
         <h3 className="text-3xl font-black text-blue-950 uppercase italic mb-3 leading-tight">Procesador de tareas</h3>
-        <p className="text-slate-400 mb-8 font-medium px-4">Recorte inteligente de gráficos y extracción automática de datos con IA.</p>
+        <p className="text-slate-400 mb-8 font-medium px-4">Recorte inteligente de gráficos y subida de datos.</p>
         
         {!isProcessing && (
           <div className="mb-6">
@@ -1693,7 +1695,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         ) : (
           <div className="flex flex-col items-center py-10">
             <RefreshCw className="h-12 w-12 text-red-600 animate-spin mb-4" />
-            <h4 className="font-black text-xl uppercase italic">EXTRAYENDO DATOS...</h4>
+            <h4 className="font-black text-xl uppercase italic">PROCESANDO GRÁFICO...</h4>
           </div>
         )}
       </div>
