@@ -1542,29 +1542,61 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   const [visibility, setVisibility] = useState('public');
   const fileInputRef = useRef(null);
 
-  const getBase64 = (file) => new Promise((resolve) => { 
-    const reader = new FileReader(); 
-    reader.onload = () => resolve(reader.result); 
-    reader.readAsDataURL(file); 
-  });
-  
-  const extractDataFromImage = async (base64Image) => {
-    // Tu clave API correcta
-    const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
-    // Usamos el modelo estable
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-    const base64Data = base64Image.split(',')[1];
-    const mimeType = base64Image.match(/data:(.*?);/)[1] || "image/jpeg";
+  const compressImageForAI = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1000; 
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
 
-    // Petición simplificada sin "generationConfig" para evitar errores 400 del servidor
+  const cropImageReal = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const cropX = img.width * 0.385; 
+        const cropWidth = img.width - cropX;
+        canvas.width = cropWidth; canvas.height = img.height;
+        ctx.drawImage(img, cropX, 0, cropWidth, img.height, 0, 0, cropWidth, img.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.95));
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const extractDataFromImage = async (base64Image) => {
+    const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
+    // CAMBIO CLAVE: Usamos gemini-1.5-flash-latest para que Google no devuelva error 404
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    const base64Data = base64Image.split(',')[1];
+
     const payload = {
       contents: [{
         role: "user",
         parts: [
-          { text: "Eres un asistente experto. Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional ni formato markdown. Las claves exactas deben ser: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'. Si un campo no aparece en la imagen, déjalo vacío." },
-          { inlineData: { mimeType: mimeType, data: base64Data } }
+          { text: "Eres un asistente experto. Extrae la información de esta ficha de entrenamiento. Responde ÚNICAMENTE con un objeto JSON válido. Claves exactas: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
+          { inlineData: { mimeType: "image/jpeg", data: base64Data } }
         ]
-      }]
+      }],
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
     };
 
     const delays = [1000, 2000, 4000];
@@ -1586,7 +1618,6 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
         let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (text) {
-           // Limpiador robusto para asegurar que React pueda leer el JSON
            text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
            return JSON.parse(text);
         }
@@ -1599,37 +1630,23 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
     }
   };
 
-  const cropImageReal = (file) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const cropX = img.width * 0.385; 
-        const cropWidth = img.width - cropX;
-        canvas.width = cropWidth; canvas.height = img.height;
-        ctx.drawImage(img, cropX, 0, cropWidth, img.height, 0, 0, cropWidth, img.height);
-        // Usamos JPEG para máxima compatibilidad con la IA
-        resolve(canvas.toDataURL('image/jpeg', 0.95));
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   const handleUpload = async (files) => {
     if (!files || files.length === 0) return;
     setIsProcessing(true);
     const extractedTasks = [];
+    
     for (let i = 0; i < files.length; i++) {
       try {
-        const fullBase64 = await getBase64(files[i]);
-        const croppedUrl = await cropImageReal(files[i]);
-        const ocrData = await extractDataFromImage(fullBase64);
+        const file = files[i];
+        
+        const compressedForAI = await compressImageForAI(file);
+        const croppedUrl = await cropImageReal(file);
+        const ocrData = await extractDataFromImage(compressedForAI);
         
         const fallbackData = {
            mainObjective: `❌ LECTURA IA FALLIDA`,
            secondaryContents: 'El sistema no pudo procesar el texto',
-           description: 'La imagen se ha recortado y guardado correctamente, pero no se pudo leer el texto. Haz clic en el botón del lápiz para editar esta tarea e introducir los textos a mano.',
+           description: 'La imagen se ha recortado y guardado correctamente, pero la IA falló. Haz clic en editar para añadir el texto a mano.',
            variant: '',
            duration: '--'
         };
@@ -1647,11 +1664,14 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
           likes: [], 
           isAutoCropped: true 
         });
-      } catch (err) { console.error("Error procesando fichero", err); }
+      } catch (err) { 
+        console.error("Error procesando fichero", err); 
+      }
     }
+    
     setIsProcessing(false); 
     onTasksExtracted(extractedTasks); 
-    showToast(`Se han procesado ${extractedTasks.length} tareas correctamente`);
+    showToast(`Se han procesado ${extractedTasks.length} tareas`);
   };
 
   return (
