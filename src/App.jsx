@@ -73,14 +73,14 @@ const initialTasksData = [
     author: { name: 'Diego Pablo Simeone', avatar: 'https://ui-avatars.com/api/?name=Diego+Simeone&background=CB3524&color=fff' },
     likes: ['cholo'],
     comments: [],
-    visibility: 'public'
+    visibility: 'public',
+    trashed: false
   }
 ];
 
 const initialGoalkeepers = [
   { id: 'gk-1', name: 'Jorge Santiago', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Jorge+Santiago&background=0D8ABC&color=fff', stats: { reflexes: 8, aerial: 5, oneVone: 7, blocking: 9, footwork: 6 }, history: [{date: '01/04/2026', rating: 8, comment: 'Buen entreno'}, {date: '08/04/2026', rating: 9, comment: 'Excelente blocaje'}] },
-  { id: 'gk-2', name: 'Francisco Redondo', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Francisco+Redondo&background=4CAF50&color=fff', stats: { reflexes: 7, aerial: 6, oneVone: 8, blocking: 7, footwork: 7 }, history: [{date: '01/04/2026', rating: 6, comment: 'Falta reacción'}, {date: '08/04/2026', rating: 7, comment: 'Mejorando'}] },
-  { id: 'gk-3', name: 'Alejandro Iglesias', year: '2011', category: 'Infantil A', assignedCoach: 'mono', avatar: 'https://ui-avatars.com/api/?name=Alejandro+Iglesias&background=E53935&color=fff', stats: { reflexes: 9, aerial: 7, oneVone: 8, blocking: 6, footwork: 5 }, history: [{date: '01/04/2026', rating: 9, comment: 'Brillante'}] }
+  { id: 'gk-2', name: 'Francisco Redondo', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Francisco+Redondo&background=4CAF50&color=fff', stats: { reflexes: 7, aerial: 6, oneVone: 8, blocking: 7, footwork: 7 }, history: [{date: '01/04/2026', rating: 6, comment: 'Falta reacción'}] }
 ];
 
 const mockOcrDatabase = [
@@ -92,10 +92,6 @@ const mockOcrDatabase = [
     duration: '15 minutos', 
     category: 'TÉCNICA' 
   }
-];
-
-const initialMessagesData = [
-  { id: 1, senderId: 1, text: '¡Hola equipo! He subido las nuevas fichas.', timestamp: '10:30' }
 ];
 
 const DEFAULT_SESSION_DATA = { 
@@ -110,7 +106,6 @@ const DEFAULT_SESSION_DATA = {
   observaciones: '• Tarea-1: Blocar correctamente y reincorporar con fuerza para realizar barrida en el 1vs1\n• Tarea-2: Incidir en atacar el balón con valentía, sin dudar y evitar las segundas jugadas'
 };
 
-// --- LIMPIADOR DE DATOS FIREBASE ---
 const cleanData = (obj) => JSON.parse(JSON.stringify(obj));
 
 // --- COMPONENTES SECUNDARIOS ---
@@ -134,14 +129,14 @@ function RadarChart({ stats, className = "w-full h-full" }) {
   return (
     <svg viewBox="0 0 100 100" className={className}>
       {[10, 8, 6, 4, 2].map(level => (
-        <polygon key={level} points={getPoints(() => level, radius)} fill="none" stroke="#e2e8f0" strokeWidth="0.5" />
+        <polygon key={`level-${level}`} points={getPoints(() => level, radius)} fill="none" stroke="#e2e8f0" strokeWidth="0.5" />
       ))}
       <polygon points={dataPoints} fill="rgba(37,99,235,0.4)" stroke="#2563eb" strokeWidth="1.5" />
       {statKeys.map((k, i) => {
         const angle = (Math.PI * 2 * i / 5) - (Math.PI / 2);
         const x = center + (radius + 10) * Math.cos(angle);
         const y = center + (radius + 10) * Math.sin(angle);
-        return <text key={k} x={x} y={y+1} fontSize="5" textAnchor="middle" alignmentBaseline="middle" fill="#64748b" fontWeight="bold">{labels[i]}</text>
+        return <text key={`label-${k}`} x={x} y={y+1} fontSize="5" textAnchor="middle" alignmentBaseline="middle" fill="#64748b" fontWeight="bold">{labels[i]}</text>
       })}
     </svg>
   );
@@ -177,7 +172,7 @@ function PdfHeader({ sessionData, isInteractive = false, onUpdate }) {
   );
 
   return (
-    <div className="flex flex-col gap-1.5 shrink-0 w-full mb-1">
+    <div className="flex flex-col gap-1.5 shrink-0 w-full mb-1 text-left">
       <div className="flex gap-1.5 h-[70px]">
         <div className="w-[90px] flex flex-col shrink-0 border-[1.5px] border-[#1a2b56] rounded-lg overflow-hidden bg-white shadow-sm">
           <div className="flex-1 p-1 flex items-center justify-center">
@@ -244,7 +239,7 @@ function PdfObjectives({ sessionData, isInteractive = false, onUpdate }) {
       </div>
       <div className="flex gap-1.5 items-stretch min-h-[90px]">
         {cols.map((col, i) => (
-          <div key={i} className="flex-1 flex flex-col border-[1.5px] border-[#1a2b56] rounded-xl overflow-hidden bg-white shadow-sm">
+          <div key={`col-${i}`} className="flex-1 flex flex-col border-[1.5px] border-[#1a2b56] rounded-xl overflow-hidden bg-white shadow-sm">
             <div className="bg-[#1a2b56] text-white flex items-center justify-center text-center text-[8px] font-bold py-1.5 uppercase shrink-0">
               {col.title}
             </div>
@@ -322,6 +317,8 @@ function PdfTaskItem({ task, num }) {
     </div>
   );
 }
+
+// --- VISTAS ---
 
 function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad, setActiveTab, setIsAIOpen, currentUser, onLoadSession, showToast, savedSessions }) {
   const todayDate = new Date();
@@ -497,7 +494,7 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
                 const sessionGks = squad.filter(gk => s.data?.gkIds?.includes(gk.id));
 
                 return (
-                  <div key={s.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row md:items-center gap-6 shadow-sm">
+                  <div key={`next-${s.id}`} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col md:flex-row md:items-center gap-6 shadow-sm">
                     <div className="flex-1">
                        <div className="flex items-center gap-3 mb-2">
                          <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">{countdown}</span>
@@ -510,7 +507,7 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
                          <div className="flex items-center mt-4">
                            <div className="flex -space-x-3 mr-3">
                              {sessionGks.map((gk, i) => (
-                               <img key={i} src={gk.avatar} className="w-8 h-8 rounded-full border-2 border-slate-50 object-cover shadow-sm" title={String(gk.name)} alt="avatar"/>
+                               <img key={`gk-${i}`} src={gk.avatar} className="w-8 h-8 rounded-full border-2 border-slate-50 object-cover shadow-sm" title={String(gk.name)} alt="avatar"/>
                              ))}
                            </div>
                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{sessionGks.length} Porteros convocados</span>
@@ -587,7 +584,7 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
              const widgetContent = widgets[widgetId];
              
              return (
-               <div key={widgetId} className={`${widgetConfig.colSpan} relative group ${isEditing ? 'border-[3px] border-dashed border-blue-400 p-2 rounded-[2.5rem] bg-blue-50/30' : ''}`}>
+               <div key={`widget-${widgetId}`} className={`${widgetConfig.colSpan} relative group ${isEditing ? 'border-[3px] border-dashed border-blue-400 p-2 rounded-[2.5rem] bg-blue-50/30' : ''}`}>
                  {isEditing && (
                    <div className="absolute -top-3 -right-3 z-50 flex gap-1 bg-white shadow-lg p-1.5 rounded-xl border border-blue-100">
                       <button onClick={() => moveWidget(layout.indexOf(widgetId), -1)} disabled={layout.indexOf(widgetId)===0} className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded-md hover:bg-blue-100 disabled:opacity-30"><MoveUp size={12}/></button>
@@ -640,7 +637,7 @@ function SquadView({ squad, onSaveGk, onDeleteGk, showToast, users, calendarEven
           const assignedCoachName = users.find(u => u.username === gk.assignedCoach)?.name || 'Sin asignar';
           return (
             <div key={gk.id} onClick={() => setSelectedGk(gk)} className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all cursor-pointer overflow-hidden group flex flex-col relative">
-              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 transition-opacity">
                 <button onClick={(e)=>{ e.stopPropagation(); setEditingGk(gk); setIsFormOpen(true); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-blue-600 hover:bg-blue-50" title="Editar Portero">
                   <Edit2 size={14} strokeWidth={3}/>
                 </button>
@@ -733,7 +730,7 @@ function GoalkeeperProfileModal({ gk, onClose, calendarEvents }) {
            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2 mb-4">Evaluaciones Recientes</h4>
            <div className="flex-1 overflow-y-auto space-y-3 min-h-[200px] max-h-[350px] pr-2">
              {(gk.history && gk.history.length > 0) ? gk.history.slice(-6).reverse().map((h, i) => (
-                 <div key={i} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                 <div key={`eval-${i}`} className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-[10px] font-bold text-slate-400">{String(h.date || '')}</span>
                       <span className="font-black text-blue-950 flex items-center gap-1 text-xs">
@@ -942,7 +939,7 @@ function SessionBuilderView({ sessionCart, setSessionCart, sessionData, setSessi
                  const taskItem = sessionCart[idx];
                  return (
                     <div
-                       key={idx}
+                       key={`kanban-${idx}`}
                        onDragOver={(e) => e.preventDefault()}
                        onDrop={(e) => {
                           e.preventDefault();
@@ -1032,7 +1029,7 @@ function SessionBuilderView({ sessionCart, setSessionCart, sessionData, setSessi
             <h3 className="text-xl font-black text-blue-950 uppercase tracking-tighter mb-2">QR de la Sesión</h3>
             <p className="text-slate-500 font-medium text-xs mb-6">Muestra este código a tus porteros.</p>
             <div className="bg-slate-50 p-4 rounded-3xl inline-block border border-slate-200 mb-4">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`[https://app.bibliokeepers.com/visor?sesion=$](https://app.bibliokeepers.com/visor?sesion=$){sessionData.sessionNumber}`)}`} alt="QR Code" className="w-[200px] h-[200px] object-contain rounded-xl mix-blend-multiply" />
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://app.bibliokeepers.com/visor?sesion=${sessionData.sessionNumber}`)}`} alt="QR Code" className="w-[200px] h-[200px] object-contain rounded-xl mix-blend-multiply" />
             </div>
             <p className="text-blue-950 font-black uppercase text-sm tracking-widest">{String(sessionData.team || '')}</p>
           </div>
@@ -1226,8 +1223,9 @@ function CreateTaskView({ onTaskSaved, currentUser, editingTask, onCancelEdit, s
   );
 }
 
-function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent, onLoadSession, showToast }) {
+function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent, onLoadSession, showToast, onDeleteSession, onCloneSession, onEvaluateSession, onMarkAttendance }) {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [assignDate, setAssignDate] = useState({});
   
   const getDaysInMonth = () => {
     const year = currentDate.getFullYear(); 
@@ -1237,7 +1235,8 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
     const startDay = firstDay === 0 ? 6 : firstDay - 1;
     const days = [];
     for (let i = 0; i < (startDay < 0 ? 6 : startDay); i++) days.push(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+    // Usamos las 12:00:00 para evitar que problemas con el horario de verano cambien la fecha
+    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i, 12, 0, 0));
     return days;
   };
 
@@ -1274,10 +1273,11 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         <div className="flex-1 bg-white border border-slate-200 shadow-sm rounded-[2.5rem] p-6 flex flex-col min-h-[500px] overflow-hidden">
            <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
-             {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => <div key={d} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 py-2 rounded-xl hidden md:block">{String(d)}</div>)}
-             {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => <div key={`m-${i}`} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 py-2 rounded-xl md:hidden">{String(d)}</div>)}
+             {['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => <div key={`header-${d}`} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 py-2 rounded-xl hidden md:block">{String(d)}</div>)}
+             {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d, i) => <div key={`header-m-${i}`} className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 py-2 rounded-xl md:hidden">{String(d)}</div>)}
            </div>
-           <div className="grid grid-cols-7 gap-2 flex-1 auto-rows-fr">
+           
+           <div className="grid grid-cols-7 gap-1 md:gap-2 flex-1 min-h-0" style={{ gridTemplateRows: `repeat(${Math.ceil(days.length / 7)}, minmax(0, 1fr))` }}>
              {days.map((date, idx) => {
                if (!date) return <div key={`empty-${idx}`} className="bg-transparent rounded-xl border border-dashed border-slate-100"></div>;
                const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -1287,34 +1287,126 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
                const isToday = date.getDate() === todayDateObj.getDate() && date.getMonth() === todayDateObj.getMonth() && date.getFullYear() === todayDateObj.getFullYear();
 
                return (
-                 <div key={dateString} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, date)} className={`bg-slate-50 rounded-xl border p-2 flex flex-col gap-1 transition-all overflow-y-auto min-h-[60px] md:min-h-[80px] ${isToday ? 'border-red-400 shadow-inner bg-red-50/20' : 'border-slate-200 hover:bg-slate-100/50'}`}>
-                   <span className={`text-xs font-black ${isToday ? 'text-red-600' : 'text-slate-400'}`}>{date.getDate()}</span>
-                   {dayEvents.map(sessionItem => {
-                     let sessionNum = sessionItem.data?.sessionNumber;
-                     if (!sessionNum || String(sessionNum).trim() === '') {
-                       const match = String(sessionItem.name || '').match(/\d+º?/);
-                       sessionNum = match ? match[0] : '--';
-                     }
-                     return (
-                       <div key={sessionItem.id} onClick={() => onLoadSession(sessionItem)} className="bg-blue-950 rounded-lg p-1.5 shadow-sm relative cursor-pointer hover:bg-blue-900 transition-colors flex flex-col items-center justify-center mt-0.5 min-h-[40px] group border border-blue-800" title={String(sessionItem.name || 'Ver Sesión')}>
-                         <div className="absolute top-0.5 right-0.5 flex gap-1 z-10">
-                            <button onClick={(e) => { e.stopPropagation(); onRemoveEvent(dateString, sessionItem.id); }} className="text-white/50 hover:text-red-400 p-0.5 rounded transition-colors" title="Quitar del calendario">
-                               <X size={12} strokeWidth={3}/>
-                            </button>
+                 <div key={`day-${idx}-${dateString}`} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, date)} className={`bg-slate-50 rounded-xl border p-1 md:p-2 flex flex-col transition-all overflow-hidden h-full min-h-0 ${isToday ? 'border-red-400 shadow-inner bg-red-50/20' : 'border-slate-200 hover:bg-slate-100/50'}`}>
+                   <span className={`text-[10px] md:text-xs font-black text-center shrink-0 mb-1 ${isToday ? 'text-red-600' : 'text-slate-400'}`}>{date.getDate()}</span>
+                   
+                   <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-1 min-h-0">
+                     {dayEvents.map((sessionItem, sIdx) => {
+                       let sessionNum = sessionItem.data?.sessionNumber;
+                       if (!sessionNum || String(sessionNum).trim() === '') {
+                         const match = String(sessionItem.name || '').match(/\d+º?/);
+                         sessionNum = match ? match[0] : '--';
+                       }
+                       return (
+                         <div key={`event-${sessionItem.id}-${dateString}-${sIdx}`} onClick={() => onLoadSession(sessionItem)} className="bg-blue-950 rounded-md md:rounded-lg p-1 shadow-sm relative cursor-pointer hover:bg-blue-900 transition-colors flex flex-col items-center justify-center shrink-0 min-h-[40px] group border border-blue-800" title={String(sessionItem.name || 'Ver Sesión')}>
+                           <div className="absolute top-0.5 left-0.5 right-0.5 flex justify-between z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                              <button onClick={(e) => { e.stopPropagation(); onMarkAttendance(sessionItem, dateString); }} className="text-white hover:text-emerald-400 p-0.5" title="Pasar Lista">
+                                 <UserCheck size={10} strokeWidth={2}/>
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); onRemoveEvent(dateString, sessionItem.id); }} className="text-white/50 hover:text-red-400 p-0.5" title="Quitar del calendario">
+                                 <X size={10} strokeWidth={2}/>
+                              </button>
+                           </div>
+                           <div className="flex flex-col items-center justify-center mt-2 pointer-events-none">
+                              <span className="text-blue-300 text-[5px] md:text-[6px] font-bold uppercase leading-none tracking-widest mb-0.5">
+                                SESIÓN
+                              </span>
+                              <span className="text-white text-[9px] md:text-[10px] font-black uppercase leading-none">
+                                {String(sessionNum)}
+                              </span>
+                           </div>
+                           {sessionItem.attendance && (
+                              <div className="absolute bottom-0.5 right-0.5 text-emerald-400" title="Lista pasada">
+                                 <CheckCircle2 size={8} strokeWidth={3} />
+                              </div>
+                           )}
                          </div>
-                         <span className="text-blue-300 text-[7px] font-bold uppercase leading-none tracking-widest mt-3">
-                           SESIÓN
-                         </span>
-                         <span className="text-white text-xs font-black uppercase leading-none mt-1">
-                           {String(sessionNum)}
-                         </span>
-                       </div>
-                     );
-                   })}
+                       );
+                     })}
+                   </div>
                  </div>
                );
              })}
            </div>
+        </div>
+
+        {/* --- BARRA LATERAL DE SESIONES GUARDADAS --- */}
+        <div className="w-full lg:w-80 flex flex-col gap-4 shrink-0">
+          <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col h-full min-h-[300px] overflow-hidden">
+            <h4 className="text-sm font-black text-blue-950 uppercase tracking-widest mb-2 shrink-0 flex items-center gap-2">
+              <FolderArchive size={18}/> Mis Sesiones
+            </h4>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-4 shrink-0">
+              Arrastra o selecciona fecha
+            </p>
+            <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-hide">
+              {(!savedSessions || savedSessions.length === 0) ? (
+                <div className="py-10 text-slate-300 font-bold uppercase tracking-widest text-[10px] text-center border-2 border-dashed border-slate-200 rounded-[1.5rem]">
+                  Sin sesiones guardadas
+                </div>
+              ) : (
+                savedSessions.map(s => {
+                  const todayObj = new Date();
+                  const localToday = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+                  
+                  return (
+                  <div 
+                    key={`saved-${s.id}`} 
+                    draggable={true} 
+                    onDragStart={(e) => e.dataTransfer.setData('sessionId', String(s.id))}
+                    className="bg-slate-50 p-4 rounded-[1.5rem] border border-slate-200 shadow-sm hover:border-blue-400 hover:shadow-md transition-all group"
+                  >
+                    <div className="cursor-grab active:cursor-grabbing flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-black text-blue-950 text-xs uppercase truncate group-hover:text-blue-600 transition-colors" title={String(s.name)}>
+                          {String(s.name)}
+                        </h5>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-1">
+                          <Clock size={10}/> {s.cart?.filter(Boolean).length || 0} tareas
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Botones de acción siempre visibles */}
+                    <div className="flex flex-col gap-2 mt-3">
+                       <div className="flex gap-1">
+                          <button onClick={() => onLoadSession(s)} className="flex items-center justify-center gap-1 p-2 bg-blue-950 text-white rounded-lg hover:bg-blue-900 shadow-md flex-1" title="Editar Sesión"><Edit2 size={12}/> <span className="text-[8px] font-bold uppercase">Editar</span></button>
+                          <button onClick={() => onCloneSession && onCloneSession(s)} className="flex items-center justify-center gap-1 p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 border border-emerald-100 shadow-sm flex-1" title="Duplicar Sesión"><Copy size={12}/> <span className="text-[8px] font-bold uppercase">Clonar</span></button>
+                          <button onClick={() => onDeleteSession && onDeleteSession(s)} className="flex items-center justify-center gap-1 p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-100 shadow-sm flex-1" title="Eliminar"><Trash2 size={12}/> <span className="text-[8px] font-bold uppercase">Borrar</span></button>
+                       </div>
+                       <div className="flex items-center gap-1 mt-1 border-t border-slate-200 pt-2">
+                          <input 
+                            type="date" 
+                            value={assignDate[s.id] || ''} 
+                            onChange={(e) => setAssignDate({...assignDate, [s.id]: e.target.value})} 
+                            className="text-[10px] font-bold text-slate-600 p-1.5 border border-slate-200 rounded-lg flex-1 outline-none focus:border-blue-400 bg-white"
+                          />
+                          <button 
+                            onClick={() => {
+                               if(assignDate[s.id]) {
+                                  onAddEvent(assignDate[s.id], s);
+                                  showToast("Sesión añadida al " + assignDate[s.id]);
+                                  setAssignDate({...assignDate, [s.id]: ''});
+                               } else {
+                                  showToast("Selecciona una fecha primero", "error");
+                               }
+                            }}
+                            className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1 px-2"
+                            title="Añadir a fecha seleccionada"
+                          >
+                            <Plus size={14}/>
+                          </button>
+                          {/* 6 puntos (GripVertical) para la asistencia */}
+                          <button onClick={() => onMarkAttendance(s, assignDate[s.id] || localToday)} className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors" title="Pasar Asistencia">
+                            <GripVertical size={16} />
+                          </button>
+                       </div>
+                    </div>
+                  </div>
+                )})
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1347,7 +1439,7 @@ function AttendanceModal({ sessionObj, squad, onClose, onSave, showToast }) {
           ) : (
              <div className="space-y-3 mb-6">
                 {sessionGks.map(gk => (
-                   <div key={gk.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm">
+                   <div key={`att-${gk.id}`} className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm">
                       <div className="flex items-center gap-3">
                          <img src={gk.avatar} className="w-8 h-8 rounded-full object-cover border border-slate-200" alt="avatar" />
                          <span className="text-[10px] font-black text-blue-950 uppercase">{String(gk.name || '')}</span>
@@ -1578,8 +1670,8 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-6">
         {trashedTasks.length === 0 ? (<div className="col-span-full py-10 text-slate-300 font-bold uppercase tracking-widest text-center border-2 border-dashed border-slate-200 rounded-[2.5rem]">No hay tareas en la papelera</div>) : (
           trashedTasks.map(t => (
-            <div key={t.id} className="relative group bg-white rounded-[2.5rem] border-2 shadow-sm border-slate-100 flex flex-col text-left opacity-75 hover:opacity-100 transition-opacity">
-              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div key={`trash-task-${t.id}`} className="relative group bg-white rounded-[2.5rem] border-2 shadow-sm border-slate-100 flex flex-col text-left opacity-75 hover:opacity-100 transition-opacity">
+              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-100 transition-opacity">
                 <button onClick={() => { onRestoreTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-emerald-500 text-white hover:bg-emerald-600" title="Restaurar Tarea"><ArchiveRestore size={14} strokeWidth={3}/></button>
                 <button onClick={() => { if(window.confirm('¿Eliminar DEFINITIVAMENTE? Esta acción no se puede deshacer.')) { onDeleteTaskForever(t); } }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-red-600 text-white hover:bg-red-700" title="Eliminar definitivamente"><Trash2 size={14} strokeWidth={3}/></button>
               </div>
@@ -1595,7 +1687,7 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10">
          {trashedSessions.length === 0 ? (<div className="col-span-full py-10 text-slate-300 font-bold uppercase tracking-widest text-center border-2 border-dashed border-slate-200 rounded-[2.5rem]">No hay sesiones en la papelera</div>) : (
             trashedSessions.map(s => (
-              <div key={s.id} className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex flex-col group opacity-75 hover:opacity-100 transition-opacity">
+              <div key={`trash-sess-${s.id}`} className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex flex-col group opacity-75 hover:opacity-100 transition-opacity">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0"><FolderArchive size={16} /></div>
@@ -1604,7 +1696,7 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
                       <p className="text-xs font-medium text-slate-400 mt-1">Eliminada de: {String(s.date)}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex flex-col gap-2 opacity-100 transition-opacity">
                      <button onClick={() => { onRestoreSession(s); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-emerald-500 text-white hover:bg-emerald-600"><ArchiveRestore size={14} strokeWidth={3}/></button>
                      <button onClick={() => {
                          if(window.confirm('¿Eliminar DEFINITIVAMENTE la sesión? Esta acción no se puede deshacer.')) {
@@ -1630,11 +1722,11 @@ function SessionsHistoryView({ savedSessions, onLoadSession, onDeleteSession, on
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(!savedSessions || savedSessions.length === 0) ? (<div className="col-span-full p-10 text-center text-slate-300 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">Aún no has guardado ninguna plantilla</div>) : (
           savedSessions.map((s, idx) => (
-            <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col group">
+            <div key={`hist-${s.id}-${idx}`} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col group">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FolderArchive size={20} /></div><div><h4 className="font-black text-blue-950 uppercase text-sm tracking-tight leading-tight">{String(s.name || '')}</h4><p className="text-xs font-medium text-slate-500 mt-1">Guardada el: {String(s.date || '')} • {s.cart?.filter(Boolean).length || 0} tareas</p></div></div>
               </div>
-              <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center transition-opacity">
                    <button onClick={() => onEvaluateSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 border border-yellow-100 shadow-sm flex-1" title="Evaluar Sesión"><MessageSquareQuote size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Evaluar</span></button>
                    <button onClick={() => onCloneSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 border border-emerald-100 shadow-sm flex-1" title="Duplicar Sesión"><Copy size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Clonar</span></button>
                    <button onClick={() => onLoadSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-blue-950 text-white rounded-xl hover:bg-blue-900 shadow-md flex-1" title="Editar Sesión"><Edit2 size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Editar</span></button>
@@ -1677,7 +1769,7 @@ function ChatView({ messages, onSendMessage, currentUser, users, onClose }) {
           const sender = users.find(u => String(u.id) === String(msg.senderId)) || { name: 'Desconocido', avatar: '' };
           const isMe = String(msg.senderId) === String(currentUser?.id);
           return (
-            <div key={msg.id} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}><img src={sender.avatar || FALLBACK_LOGO} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/><div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
+            <div key={`msg-${msg.id}`} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}><img src={sender.avatar || FALLBACK_LOGO} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/><div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
               <div className="flex items-baseline gap-2 mb-0.5">
                 <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender?.name || 'User').split(' ')[0]}</span>
                 <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp)}</span>
@@ -1768,7 +1860,7 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {users.map(u => (
-          <div key={u.id} className="bg-white p-4 rounded-[2rem] border flex items-center justify-between shadow-sm">
+          <div key={`user-${u.id}`} className="bg-white p-4 rounded-[2rem] border flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-4">
               <img src={u.avatar} className="w-14 h-14 rounded-full border border-slate-200 object-cover" alt="avatar"/>
               <div className="text-left">
@@ -1813,72 +1905,13 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
   );
 }
 
-function EvaluationModal({ session, squad, onClose, onSave, showToast }) {
-  const sessionGks = squad.filter(gk => session.data?.gkIds?.includes(gk.id));
-  const [rating, setRating] = useState(session.rating || 5);
-  const [comment, setComment] = useState(session.evaluationComment || '');
-  const [gkRatings, setGkRatings] = useState(session.gkRatings || sessionGks.reduce((acc, gk) => ({...acc, [gk.id]: 5}), {}));
-
-  const handleSave = () => {
-    onSave(session.id, rating, comment, gkRatings);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[400] flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-[2.5rem] max-w-md w-full shadow-2xl relative text-left animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"><X size={20}/></button>
-        <div className="flex items-center gap-3 mb-1 shrink-0">
-           <div className="w-10 h-10 bg-yellow-50 text-yellow-500 rounded-full flex items-center justify-center border border-yellow-100"><MessageSquareQuote size={18}/></div>
-           <h3 className="text-xl font-black text-blue-950 uppercase tracking-tighter leading-none">Evaluar Sesión</h3>
-        </div>
-        <p className="text-slate-500 font-medium text-xs mb-6 truncate pl-13 shrink-0">{String(session.name || '')}</p>
-
-        <div className="overflow-y-auto flex-1 pr-2 space-y-6">
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nota General de la Sesión</label>
-            <div className="flex items-center gap-4 mt-2">
-               <input type="range" min="1" max="10" value={rating} onChange={(e) => setRating(Number(e.target.value))} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-yellow-500" />
-               <span className="w-10 text-center font-black text-blue-950 text-lg flex items-center justify-center gap-1 bg-yellow-50 p-2 rounded-xl text-yellow-600"><Star size={14} fill="currentColor"/>{rating}</span>
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Observaciones / Sensaciones</label>
-            <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="¿Cómo ha ido la sesión?..." className="w-full p-4 mt-2 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-24 resize-none text-xs" />
-          </div>
-          {sessionGks.length > 0 && (
-             <div className="pt-4 border-t border-slate-100">
-               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Evaluación Individual</h4>
-               <div className="space-y-4">
-                  {sessionGks.map(gk => (
-                     <div key={gk.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <div className="flex items-center gap-3 mb-3">
-                           <img src={gk.avatar} className="w-8 h-8 rounded-full object-cover border border-slate-200" alt="avatar" />
-                           <span className="text-xs font-black text-blue-950 uppercase">{String(gk.name || '')}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                           <span className="text-[10px] font-bold text-slate-400">Nota:</span>
-                           <input type="range" min="1" max="10" value={gkRatings[gk.id]} onChange={(e) => setGkRatings({...gkRatings, [gk.id]: Number(e.target.value)})} className="flex-1 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                           <span className="w-6 text-center font-black text-blue-950 text-sm">{gkRatings[gk.id]}</span>
-                        </div>
-                     </div>
-                  ))}
-               </div>
-             </div>
-          )}
-        </div>
-        <button onClick={handleSave} className="w-full py-4 mt-6 shrink-0 rounded-2xl font-black text-white bg-blue-950 hover:bg-blue-900 shadow-lg uppercase text-xs tracking-widest transition-colors">Guardar Evaluación</button>
-      </div>
-    </div>
-  )
-}
+// --- COMPONENTE PRINCIPAL APP ---
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [fbUser, setFbUser] = useState(null);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // --- ESTADOS REACTIVOS ---
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [trashedTasks, setTrashedTasks] = useState([]);
@@ -1888,7 +1921,6 @@ export default function App() {
   const [calendarEventsState, setCalendarEventsState] = useState({});
   const [messages, setMessages] = useState([]);
   
-  // --- ESTADOS UI ---
   const [activeTab, setActiveTab] = useState('home');
   const [libraryView, setLibraryView] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1919,11 +1951,7 @@ export default function App() {
     const script1 = document.createElement('script'); script1.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; script1.async = true; document.body.appendChild(script1);
     const script2 = document.createElement('script'); script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"; script2.async = true; document.body.appendChild(script2);
     
-    // PWA Install Prompt Listener
-    const handler = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
+    const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
@@ -1937,15 +1965,12 @@ export default function App() {
       if (newMessagesCount > 0) {
         const newMsgs = messages.slice(prevMessagesLength.current);
         const unread = newMsgs.filter(m => String(m.senderId) !== String(currentUser?.id)).length;
-        if (unread > 0) {
-           setUnreadCount(prev => prev + unread);
-        }
+        if (unread > 0) setUnreadCount(prev => prev + unread);
       }
       prevMessagesLength.current = messages.length;
     }
   }, [messages, isChatOpen, currentUser]);
 
-  // 2. INICIALIZAR FIREBASE
   useEffect(() => {
     const initAuth = async () => {
        try {
@@ -1954,9 +1979,7 @@ export default function App() {
            } else {
                await signInAnonymously(auth);
            }
-       } catch(e) {
-           console.error("Firebase Auth Error", e);
-       }
+       } catch(e) { console.error("Firebase Auth Error", e); }
     };
     initAuth();
 
@@ -1967,14 +1990,11 @@ export default function App() {
              try {
                  const snap = await getDocs(getColl('users'));
                  if(snap.empty) {
-                    console.log("Seeding database...");
                     mockUsersInitial.forEach(u => setDoc(getDocRef('users', u.id), u));
                     initialTasksData.forEach(t => setDoc(getDocRef('tasks', t.id), t));
                     initialGoalkeepers.forEach(gk => setDoc(getDocRef('goalkeepers', gk.id), gk));
                  }
-             } catch (err) {
-                 console.error("Error al sembrar base de datos. Verifica reglas de Firestore:", err);
-             }
+             } catch (err) { console.error("Error seeding DB", err); }
           };
           seed();
        }
@@ -1982,75 +2002,37 @@ export default function App() {
     return () => unsubscribeAuth();
   }, []);
 
-  // 3. LISTENERS EN TIEMPO REAL A FIRESTORE
   useEffect(() => {
      if(!fbUser) return;
-
-     const unsubUsers = onSnapshot(getColl('users'), 
-         snap => setUsers(snap.docs.map(d => ({...d.data(), id: Number(d.id)||d.id}))), 
-         err => console.error("Users error:", err)
-     );
-     
-     const unsubTasks = onSnapshot(getColl('tasks'), 
-         snap => {
-            const all = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            setTasks(all.filter(t => !t.trashed));
-            setTrashedTasks(all.filter(t => t.trashed));
-         }, 
-         err => console.error("Tasks error:", err)
-     );
-     
-     const unsubSquad = onSnapshot(getColl('goalkeepers'), 
-         snap => setSquad(snap.docs.map(d => ({ id: d.id, ...d.data() }))), 
-         err => console.error("Squad error:", err)
-     );
-     
-     const unsubSessions = onSnapshot(getColl('sessions'), 
-         snap => {
-            const all = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            setSavedSessionsState(all.filter(s => !s.trashed));
-            setTrashedSessions(all.filter(s => s.trashed));
-         }, 
-         err => console.error("Sessions error:", err)
-     );
-     
-     const unsubEvents = onSnapshot(getColl('calendarEvents'), 
-         snap => {
-            const globalEvents = {};
-            snap.docs.forEach(d => { globalEvents[d.id] = d.data().events || []; });
-            setCalendarEventsState(globalEvents);
-         }, 
-         err => console.error("Events error:", err)
-     );
-
-     const unsubMessages = onSnapshot(query(getColl('messages'), orderBy('createdAt', 'asc')), 
-         snap => setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() }))), 
-         err => console.error("Messages error:", err)
-     );
+     const unsubUsers = onSnapshot(getColl('users'), snap => setUsers(snap.docs.map(d => ({...d.data(), id: Number(d.id)||d.id}))));
+     const unsubTasks = onSnapshot(getColl('tasks'), snap => {
+        const all = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        setTasks(all.filter(t => !t.trashed));
+        setTrashedTasks(all.filter(t => t.trashed));
+     });
+     const unsubSquad = onSnapshot(getColl('goalkeepers'), snap => setSquad(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
+     const unsubSessions = onSnapshot(getColl('sessions'), snap => {
+        const all = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        setSavedSessionsState(all.filter(s => !s.trashed));
+        setTrashedSessions(all.filter(s => s.trashed));
+     });
+     const unsubEvents = onSnapshot(getColl('calendarEvents'), snap => {
+        const globalEvents = {};
+        snap.docs.forEach(d => { globalEvents[d.id] = d.data().events || []; });
+        setCalendarEventsState(globalEvents);
+     });
+     const unsubMessages = onSnapshot(query(getColl('messages'), orderBy('createdAt', 'asc')), snap => setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 
      return () => { unsubUsers(); unsubTasks(); unsubSquad(); unsubSessions(); unsubEvents(); unsubMessages(); }
   }, [fbUser]);
 
-  // --- FIREBASE HANDLERS ---
   const handleSaveUser = async (user) => await setDoc(getDocRef('users', user.id), cleanData(user));
   const handleToggleUserActive = async (id, active) => await updateDoc(getDocRef('users', id), { active });
-  
   const handleSaveTask = async (task) => await setDoc(getDocRef('tasks', task.id), cleanData(task), { merge: true });
-  
-  const handleTrashTask = async (taskId) => {
-     await updateDoc(getDocRef('tasks', taskId), { trashed: true });
-     showToast("Enviada a papelera", "success");
-  };
-  const handleRestoreTask = async (task) => {
-     await updateDoc(getDocRef('tasks', task.id), { trashed: false });
-     showToast("Tarea restaurada");
-  };
-  const handleDeleteTaskForever = async (task) => {
-     await deleteDoc(getDocRef('tasks', task.id));
-     showToast("Tarea eliminada para siempre", "success");
-  };
+  const handleTrashTask = async (taskId) => { await updateDoc(getDocRef('tasks', taskId), { trashed: true }); showToast("Enviada a papelera", "success"); };
+  const handleRestoreTask = async (task) => { await updateDoc(getDocRef('tasks', task.id), { trashed: false }); showToast("Tarea restaurada"); };
+  const handleDeleteTaskForever = async (task) => { await deleteDoc(getDocRef('tasks', task.id)); showToast("Tarea eliminada para siempre", "success"); };
 
-  // --- FUNCIONES RESTAURADAS QUE FALTABAN ---
   const toggleFavorite = async (taskId, e) => {
     e.stopPropagation();
     const task = tasks.find(t => String(t.id) === String(taskId));
@@ -2065,7 +2047,6 @@ export default function App() {
     await setDoc(getDocRef('tasks', cloned.id), cleanData(cloned));
     showToast("Tarea duplicada correctamente");
   };
-  // -------------------------------------------
   
   const handleSaveGk = async (gkData) => await setDoc(getDocRef('goalkeepers', gkData.id), cleanData(gkData));
   const handleDeleteGk = async (id) => await deleteDoc(getDocRef('goalkeepers', id));
@@ -2075,22 +2056,12 @@ export default function App() {
         await setDoc(getDocRef('sessions', session.id), cleanData(session));
         showToast("Plantilla guardada en la nube.");
     } catch(e) {
-        console.error("Error al guardar la sesión:", e);
-        showToast("Error guardando sesión. Comprueba que todos los campos estén llenos.", "error");
+        showToast("Error guardando sesión.", "error");
     }
   };
-  const handleTrashSession = async (sessionId) => {
-    await updateDoc(getDocRef('sessions', sessionId), { trashed: true });
-    showToast("Sesión enviada a papelera", "success");
-  };
-  const handleRestoreSession = async (session) => {
-    await updateDoc(getDocRef('sessions', session.id), { trashed: false });
-    showToast("Sesión restaurada");
-  };
-  const handleDeleteSessionForever = async (session) => {
-    await deleteDoc(getDocRef('sessions', session.id));
-    showToast("Sesión eliminada para siempre", "success");
-  };
+  const handleTrashSession = async (sessionId) => { await updateDoc(getDocRef('sessions', sessionId), { trashed: true }); showToast("Sesión enviada a papelera", "success"); };
+  const handleRestoreSession = async (session) => { await updateDoc(getDocRef('sessions', session.id), { trashed: false }); showToast("Sesión restaurada"); };
+  const handleDeleteSessionForever = async (session) => { await deleteDoc(getDocRef('sessions', session.id)); showToast("Sesión eliminada para siempre", "success"); };
   const handleCloneSession = async (session) => {
     const cloned = { ...session, id: Date.now().toString(), name: `${session.name} (Copia)`, date: new Date().toLocaleDateString() };
     await setDoc(getDocRef('sessions', cloned.id), cleanData(cloned));
@@ -2131,7 +2102,6 @@ export default function App() {
   const handleSendMessage = async (text) => {
     await addDoc(getColl('messages'), { senderId: currentUser.id, text, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), createdAt: Date.now() });
   };
-
 
   if (!currentUser) return <LoginView users={users} onLogin={setCurrentUser} />;
   const liveUser = users.find(u => u.id == currentUser.id) || currentUser;
@@ -2181,7 +2151,6 @@ export default function App() {
     showToast('Sesión cargada en el constructor'); 
   };
 
-
   return (
     <div className="flex h-screen bg-slate-100 overflow-hidden font-sans text-slate-800 relative">
       <style>{`
@@ -2190,7 +2159,7 @@ export default function App() {
       `}</style>
       <div className="fixed top-8 right-8 z-[9999] flex flex-col gap-3 pointer-events-none">
         {toasts.map(toast => (
-          <div key={toast.id} className={`bg-white border-l-4 ${toast.type === 'error' ? 'border-red-500' : 'border-emerald-500'} shadow-2xl rounded-2xl p-4 flex items-center gap-3 animate-in slide-in-from-right-8 pointer-events-auto min-w-[250px]`}>
+          <div key={`toast-${toast.id}`} className={`bg-white border-l-4 ${toast.type === 'error' ? 'border-red-500' : 'border-emerald-500'} shadow-2xl rounded-2xl p-4 flex items-center gap-3 animate-in slide-in-from-right-8 pointer-events-auto min-w-[250px]`}>
             {toast.type === 'error' ? <AlertCircle className="text-red-500 shrink-0" /> : <CheckCircle2 className="text-emerald-500 shrink-0" />}
             <p className="font-bold text-slate-700 text-xs tracking-wide">{String(toast.msg)}</p>
           </div>
@@ -2218,11 +2187,11 @@ export default function App() {
         <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
           {NAV_ITEMS.map((item, idx) => {
             if (item.adminOnly && liveUser.role !== 'admin') return null;
-            if (item.divider) return <div key={idx} className="h-px bg-blue-900/50 my-2 mx-2"></div>;
+            if (item.divider) return <div key={`div-${idx}`} className="h-px bg-blue-900/50 my-2 mx-2"></div>;
             const isActive = (item.id === activeTab && !item.action) || (item.id === 'library' && activeTab === 'library' && !showFavoritesOnly) || (item.id === 'favs' && activeTab === 'library' && showFavoritesOnly);
             const NavIcon = item.icon;
             return (
-              <button key={idx} onClick={() => handleNavClick(item)} className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${isActive ? 'bg-red-600 font-bold shadow-lg shadow-red-600/30' : 'hover:bg-blue-900 text-blue-200'}`}>
+              <button key={`nav-${item.id}-${idx}`} onClick={() => handleNavClick(item)} className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${isActive ? 'bg-red-600 font-bold shadow-lg shadow-red-600/30' : 'hover:bg-blue-900 text-blue-200'}`}>
                  <div className="flex items-center gap-3"><NavIcon size={20}/> {item.label}</div>
                  {item.badge > 0 && <span className="bg-white text-red-600 text-[10px] px-2 py-0.5 rounded-full font-black shadow-sm">{Number(item.badge)}</span>}
               </button>
@@ -2275,7 +2244,7 @@ export default function App() {
                    <span className="text-slate-200 hidden md:inline">|</span>
                    <select value={filterAuthor} onChange={e=>setFilterAuthor(e.target.value)} className="bg-transparent text-xs font-bold uppercase tracking-widest text-slate-500 outline-none cursor-pointer hover:text-blue-950">
                      <option value="">Todos los Entrenadores</option>
-                     {[...new Set(tasks.map(t => t.author?.name).filter(Boolean))].map(author => <option key={author} value={String(author)}>{String(author)}</option>)}
+                     {[...new Set(tasks.map(t => t.author?.name).filter(Boolean))].map(author => <option key={`author-${author}`} value={String(author)}>{String(author)}</option>)}
                    </select>
                    <div className="flex gap-1 ml-auto bg-slate-50 p-1 rounded-xl border border-slate-200">
                      <button onClick={() => setLibraryView('grid')} className={`p-1.5 rounded-lg transition-colors ${libraryView === 'grid' ? 'bg-white shadow text-blue-600' : 'text-slate-400 hover:text-blue-950'}`} title="Vista Cuadrícula"><LayoutGrid size={14}/></button>
@@ -2293,9 +2262,9 @@ export default function App() {
                   
                   if (libraryView === 'grid') {
                     return (
-                      <div key={t.id} className="relative group">
+                      <div key={`grid-task-${t.id}`} className="relative group">
                         {canEditOrDelete && (
-                          <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-100 transition-opacity">
                             <button onClick={(e)=>{ e.stopPropagation(); setEditingTask(t); setActiveTab('create'); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-blue-600 hover:bg-blue-50"><Edit2 size={14} strokeWidth={3}/></button>
                             <button onClick={(e)=>{ e.stopPropagation(); handleCloneTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-emerald-600 hover:bg-emerald-50"><Copy size={14} strokeWidth={3}/></button>
                             <button onClick={(e)=>{ e.stopPropagation(); setTaskToDelete(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-red-600 hover:bg-red-50"><Trash2 size={14} strokeWidth={3}/></button>
@@ -2339,7 +2308,7 @@ export default function App() {
                     );
                   } else {
                     return (
-                      <div key={t.id} onClick={() => setSelectedTask(t)} className={`relative group bg-white rounded-3xl border-2 shadow-sm hover:shadow-xl transition-all flex text-left cursor-pointer overflow-hidden h-28 ${inCart?'border-red-500':'border-slate-100 hover:border-red-100'}`}>
+                      <div key={`list-task-${t.id}`} onClick={() => setSelectedTask(t)} className={`relative group bg-white rounded-3xl border-2 shadow-sm hover:shadow-xl transition-all flex text-left cursor-pointer overflow-hidden h-28 ${inCart?'border-red-500':'border-slate-100 hover:border-red-100'}`}>
                         <div className="w-40 shrink-0 relative bg-slate-50 border-r border-slate-100">
                            <img src={t.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="img"/>
                            <button onClick={(e)=>{
@@ -2377,7 +2346,7 @@ export default function App() {
                                   <Star size={16} strokeWidth={2.5} fill={isFav ? "currentColor" : "none"}/>
                                 </button>
                                 {canEditOrDelete && (
-                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <div className="flex gap-1 opacity-100 transition-opacity">
                                      <button onClick={(e)=>{ e.stopPropagation(); setEditingTask(t); setActiveTab('create'); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-blue-600 hover:bg-blue-100"><Edit2 size={12} strokeWidth={3}/></button>
                                      <button onClick={(e)=>{ e.stopPropagation(); handleCloneTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-emerald-600 hover:bg-emerald-100"><Copy size={12} strokeWidth={3}/></button>
                                      <button onClick={(e)=>{ e.stopPropagation(); setTaskToDelete(t); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-red-600 hover:bg-red-100"><Trash2 size={12} strokeWidth={3}/></button>
@@ -2396,7 +2365,7 @@ export default function App() {
           )}
           
           {activeTab === 'builder' && <SessionBuilderView sessionCart={sessionCart} setSessionCart={setSessionCart} sessionData={sessionData} setSessionData={setSessionData} showToast={showToast} onSaveTemplate={handleSaveTemplate} currentUser={liveUser} squad={squad} onNewSession={() => { setSessionCart([null, null, null, null]); setSessionData({ ...DEFAULT_SESSION_DATA }); setActiveTab('library'); showToast("Lista para crear una nueva sesión", "success"); }} />}
-          {activeTab === 'calendar' && <CalendarView savedSessions={savedSessionsState} calendarEvents={calendarEventsState} onAddEvent={handleAddEvent} onRemoveEvent={handleRemoveEvent} onLoadSession={loadSession} showToast={showToast} />}
+          {activeTab === 'calendar' && <CalendarView savedSessions={savedSessionsState} calendarEvents={calendarEventsState} onAddEvent={handleAddEvent} onRemoveEvent={handleRemoveEvent} onLoadSession={loadSession} showToast={showToast} onDeleteSession={setSessionToDelete} onCloneSession={handleCloneSession} onEvaluateSession={setEvaluatingSession} onMarkAttendance={(sessionItem, dateString) => setAttendanceSession({ sessionItem, dateString })} />}
           {activeTab === 'create' && <CreateTaskView editingTask={editingTask} onCancelEdit={() => { setEditingTask(null); setActiveTab('library'); }} onTaskSaved={task => { handleSaveTask(task); setEditingTask(null); setActiveTab('library'); showToast("Tarea Guardada"); }} currentUser={liveUser} showToast={showToast} />}
           {activeTab === 'upload' && <UploadView onTasksExtracted={ts => { ts.forEach(t => handleSaveTask(t)); setActiveTab('library'); showToast(`Se han procesado ${ts.length} tareas correctamente`); }} currentUser={liveUser} showToast={showToast}/>}
           {activeTab === 'sessions' && <SessionsHistoryView savedSessions={savedSessionsState} onLoadSession={loadSession} onDeleteSession={setSessionToDelete} onCloneSession={handleCloneSession} showToast={showToast} onEvaluateSession={setEvaluatingSession} />}
