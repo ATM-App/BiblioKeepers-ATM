@@ -1545,7 +1545,7 @@ function UploadView({ onTasksExtracted, currentUser, showToast }) {
   const getBase64 = (file) => new Promise((resolve) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file); });
   
   const extractDataFromImage = async (base64Image) => {
-    const apiKey = "";
+    const apiKey = "AIzaSyAz6h4JrsOGvvIg2NWh0fiIqUvEnYR7IIQ";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
     const base64Data = base64Image.split(',')[1];
     const mimeType = base64Image.match(/data:(.*?);/)[1] || "image/png";
