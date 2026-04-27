@@ -83,17 +83,6 @@ const initialGoalkeepers = [
   { id: 'gk-2', name: 'Francisco Redondo', year: '2012', category: 'Alevín B', assignedCoach: 'cholo', avatar: 'https://ui-avatars.com/api/?name=Francisco+Redondo&background=4CAF50&color=fff', stats: { reflexes: 7, aerial: 6, oneVone: 8, blocking: 7, footwork: 7 }, history: [{date: '01/04/2026', rating: 6, comment: 'Falta reacción'}] }
 ];
 
-const mockOcrDatabase = [
-  { 
-    mainObjective: 'Blocaje Frontal Raso + Pase mano picado', 
-    secondaryContents: 'Blocaje lateral raso + Perfilamiento, control orientado y pase + reincorporación tras blocaje', 
-    description: '1. Coordinación en escalera (frontal-lateral) + Chut + Blocaje frontal raso\n2. Pase mano (Picado-alto-raso) identificar según altura y posición EDP\n3. Chut + blocaje lateral raso + Reincorporación tras Blocaje + Pase mano picado', 
-    variant: 'Cambiar lateralidad\nCambiar Blocaje lateral por perfilamiento, control y pase a mini portería',
-    duration: '15 minutos', 
-    category: 'TÉCNICA' 
-  }
-];
-
 const DEFAULT_SESSION_DATA = { 
   clubName: 'CD ÁLCALA', team: 'ALEVIN B - F11', coach: 'JHON ALEXANDER ARROYAVE CARDENAS', 
   goalkeepers: '', gkIds: [], material: 'BALONES + MARCAS + PICAS-BASE (2) + ESCALERA(1)', 
@@ -317,10 +306,7 @@ function PdfTaskItem({ task, num }) {
     </div>
   );
 }
-
-// --- VISTAS ---
-
-function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad, setActiveTab, setIsAIOpen, currentUser, onLoadSession, showToast, savedSessions }) {
+function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad, setActiveTab, currentUser, onLoadSession, showToast, savedSessions }) {
   const todayDate = new Date();
   const todayYear = todayDate.getFullYear();
   const todayMonth = String(todayDate.getMonth() + 1).padStart(2, '0');
@@ -413,19 +399,6 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
 
   const hiddenWidgets = availableWidgets.filter(w => !layout.includes(w.id));
 
-  const WidgetWrapper = ({ id, children, colSpan }) => (
-    <div className={`${colSpan} relative group ${isEditing ? 'border-[3px] border-dashed border-blue-400 p-2 rounded-[2.5rem] bg-blue-50/30' : ''}`}>
-       {isEditing && (
-         <div className="absolute -top-3 -right-3 z-50 flex gap-1 bg-white shadow-lg p-1.5 rounded-xl border border-blue-100">
-            <button onClick={() => moveWidget(layout.indexOf(id), -1)} disabled={layout.indexOf(id)===0} className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded-md hover:bg-blue-100 disabled:opacity-30"><MoveUp size={12}/></button>
-            <button onClick={() => moveWidget(layout.indexOf(id), 1)} disabled={layout.indexOf(id)===layout.length-1} className="w-6 h-6 flex items-center justify-center bg-slate-100 rounded-md hover:bg-blue-100 disabled:opacity-30"><MoveDown size={12}/></button>
-            <button onClick={() => removeWidget(id)} className="w-6 h-6 flex items-center justify-center bg-red-100 text-red-600 rounded-md hover:bg-red-200 ml-2"><X size={12}/></button>
-         </div>
-       )}
-       {children}
-    </div>
-  );
-
   const widgets = {
     welcome: (
        <div className="bg-gradient-to-br from-blue-950 to-blue-900 p-8 rounded-[3rem] border border-blue-800 shadow-xl flex flex-col justify-between gap-2 text-white relative overflow-hidden h-full min-h-[150px]">
@@ -441,18 +414,14 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
        </div>
     ),
     quickActions: (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-          <button onClick={() => setIsAIOpen(true)} className="bg-gradient-to-r from-purple-500 to-indigo-500 p-6 rounded-[2rem] flex items-center gap-4 text-white hover:scale-[1.02] transition-transform shadow-md h-full">
-             <div className="bg-white/20 p-3 rounded-2xl"><BrainCircuit size={24} /></div>
-             <div className="text-left"><h4 className="font-black uppercase tracking-widest text-sm">Generar Sesión IA</h4><p className="text-[10px] font-medium text-purple-100">Creación automática</p></div>
-          </button>
-          <button onClick={() => setActiveTab('upload')} className="bg-gradient-to-r from-emerald-500 to-teal-500 p-6 rounded-[2rem] flex items-center gap-4 text-white hover:scale-[1.02] transition-transform shadow-md h-full">
-             <div className="bg-white/20 p-3 rounded-2xl"><ImageIcon size={24} /></div>
-             <div className="text-left"><h4 className="font-black uppercase tracking-widest text-sm">Escanear Ficha</h4><p className="text-[10px] font-medium text-emerald-100">Sube fotos o gráficos</p></div>
-          </button>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
           <button onClick={() => setActiveTab('create')} className="bg-gradient-to-r from-orange-500 to-red-500 p-6 rounded-[2rem] flex items-center gap-4 text-white hover:scale-[1.02] transition-transform shadow-md h-full">
              <div className="bg-white/20 p-3 rounded-2xl"><Edit2 size={24} /></div>
              <div className="text-left"><h4 className="font-black uppercase tracking-widest text-sm">Crear Tarea</h4><p className="text-[10px] font-medium text-orange-100">Añadir ficha manual</p></div>
+          </button>
+          <button onClick={() => setActiveTab('builder')} className="bg-gradient-to-r from-blue-500 to-indigo-500 p-6 rounded-[2rem] flex items-center gap-4 text-white hover:scale-[1.02] transition-transform shadow-md h-full">
+             <div className="bg-white/20 p-3 rounded-2xl"><FileStack size={24} /></div>
+             <div className="text-left"><h4 className="font-black uppercase tracking-widest text-sm">Montar Sesión</h4><p className="text-[10px] font-medium text-blue-100">Planificador en PDF</p></div>
           </button>
        </div>
     ),
@@ -569,14 +538,12 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 md:pb-10 pb-24 text-left animate-in fade-in">
-       {/* Edit Panel Button */}
        <div className="flex justify-end">
          <button onClick={() => setIsEditing(!isEditing)} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border ${isEditing ? 'bg-blue-950 text-white border-blue-950' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}>
            <Settings size={14}/> {isEditing ? 'Finalizar Edición' : 'Editar Panel'}
          </button>
        </div>
 
-       {/* Render Widgets Loop */}
        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {layout.map((widgetId) => {
              const widgetConfig = availableWidgets.find(w => w.id === widgetId);
@@ -598,7 +565,6 @@ function HomeView({ tasks, calendarEvents, messages, onSendMessage, users, squad
           })}
        </div>
 
-       {/* Hidden Widgets Tray */}
        {isEditing && hiddenWidgets.length > 0 && (
          <div className="mt-8 p-6 bg-slate-200/50 border-2 border-dashed border-slate-300 rounded-[2.5rem] animate-in slide-in-from-bottom-5">
             <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Widgets Ocultos (Haz clic para añadir)</h4>
@@ -835,7 +801,6 @@ function GoalkeeperFormModal({ onClose, onSave, users, editingGk }) {
     </div>
   );
 }
-
 function SessionBuilderView({ sessionCart, setSessionCart, sessionData, setSessionData, showToast, onSaveTemplate, currentUser, squad, onNewSession }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showQR, setShowQR] = useState(false);
@@ -1073,157 +1038,7 @@ function SessionBuilderView({ sessionCart, setSessionCart, sessionData, setSessi
   );
 }
 
-function TaskDetailModal({ task, onClose, users }) {
-  const author = users.find(u => u.name === task.author?.name) || task.author;
-  const handleDownload = () => { const link = document.createElement('a'); link.href = task.imageUrl; link.download = `Grafico_${String(task.mainObjective || 'Tarea').replace(/\s+/g, '_')}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
-  
-  return (
-    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 md:p-8">
-      <div className="bg-slate-50 w-full max-w-6xl h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white/10">
-        <div className="bg-white px-8 py-6 border-b border-slate-200 flex justify-between items-center shrink-0">
-          <div className="flex flex-col">
-            <h2 className="text-2xl md:text-3xl font-black text-blue-950 uppercase tracking-tighter leading-tight">{String(task.mainObjective || task.title || '')}</h2>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="bg-slate-100 text-slate-500 font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest">{String(task.category || 'Técnica')}</span>
-              <span className="text-slate-400 text-xs font-medium flex items-center gap-1"><Clock size={12}/> {String(task.duration || '')}</span>
-              {task.visibility === 'private' && (<span className="bg-red-50 text-red-600 border border-red-200 font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest flex items-center gap-1"><Lock size={10}/> Privada</span>)}
-            </div>
-          </div>
-          <button onClick={onClose} className="p-3 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-colors"><X size={24}/></button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col lg:flex-row gap-8 text-left">
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-200 flex-1 flex items-center justify-center overflow-hidden relative">
-              <img src={task.imageUrl} alt={task.title} className="w-full h-full object-contain max-h-[500px]" />
-            </div>
-            <button onClick={handleDownload} className="w-full bg-blue-950 hover:bg-blue-900 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg transition-all"><Download size={20} /> Descargar Gráfico</button>
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 mt-auto">
-              <img src={author?.avatar} className="w-12 h-12 rounded-full border border-slate-200 object-cover shadow-sm" alt="author"/>
-              <div className="flex flex-col">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tarea creada por</p>
-                <p className="text-sm font-black text-blue-950 uppercase">{String(author?.name || '')}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 h-fit">
-            <div className="col-span-1 md:col-span-2 bg-emerald-50 border border-emerald-100 rounded-[2rem] p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-widest mb-3"><Target size={16} /> Objetivo Principal</div>
-              <p className="text-xl font-black text-emerald-950 leading-tight">{String(task.mainObjective || '')}</p>
-            </div>
-            <div className="col-span-1 md:col-span-2 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest mb-3"><List size={16} /> Objetivos Secundarios</div>
-              <p className="text-sm font-bold text-blue-950 leading-relaxed">{String(task.secondaryContents || 'No se han especificado contenidos secundarios.')}</p>
-            </div>
-            <div className="col-span-1 md:col-span-2 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-              <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest mb-4"><BookOpen size={16} /> Descripción de Tarea</div>
-              <p className="text-sm font-medium text-slate-700 whitespace-pre-line leading-loose">{String(task.description || '')}</p>
-            </div>
-            <div className="col-span-1 md:col-span-2 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-[2rem] p-6">
-              <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest mb-3"><RefreshCw size={16} /> Variantes Sugeridas</div>
-              <p className="text-sm font-medium text-slate-500 italic whitespace-pre-line leading-relaxed">{String(task.variant || 'No se han añadido variantes.')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CreateTaskView({ onTaskSaved, currentUser, editingTask, onCancelEdit, showToast }) {
-  const [formData, setFormData] = useState(
-    editingTask || { mainObjective: '', secondaryContents: '', description: '', variant: '', duration: '', category: 'TÉCNICA', imageUrl: '', visibility: 'public' }
-  );
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) { 
-      const reader = new FileReader(); 
-      reader.onloadend = () => { setFormData({ ...formData, imageUrl: String(reader.result) }); }; 
-      reader.readAsDataURL(file); 
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.mainObjective.trim() || !formData.imageUrl) return showToast("El Objetivo y el Gráfico son obligatorios.", "error");
-    onTaskSaved({ ...formData, id: editingTask ? editingTask.id : `manual-${Date.now()}`, title: formData.mainObjective, author: formData.author || { name: currentUser.name, avatar: currentUser.avatar }, likes: formData.likes || [], comments: [] });
-  };
-
-  return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in pb-20 text-left">
-      <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div>
-          <h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">{editingTask ? 'Editar Tarea' : 'Crear Tarea Manual'}</h3>
-          <p className="text-slate-500 text-sm mt-1">Añade o edita los campos y el gráfico de la tarea.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {editingTask && <button onClick={onCancelEdit} className="px-6 py-4 rounded-2xl font-black uppercase text-slate-500 bg-slate-100 hover:bg-slate-200">Cancelar</button>}
-          <button onClick={handleSubmit} className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase shadow-xl bg-red-600 text-white hover:bg-red-700"><Save size={20}/> Guardar Tarea</button>
-        </div>
-      </div>
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-1/3 space-y-4 flex flex-col">
-           <h4 className="text-sm font-black text-blue-950 uppercase tracking-widest flex items-center gap-2"><ImageIcon size={18}/> Gráfico</h4>
-           <div className="bg-white p-2 rounded-[2.5rem] border border-slate-200 shadow-sm flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[250px]">
-             {formData.imageUrl ? (
-               <>
-                 <img src={formData.imageUrl} className="w-full h-full object-cover rounded-[2rem]" alt="Preview"/>
-                 <div className="absolute inset-0 bg-blue-950/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer" onClick={() => document.getElementById('task-image-manual').click()}><RefreshCw className="text-white w-10 h-10" /></div>
-               </>
-             ) : (
-               <div className="cursor-pointer flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-red-400 hover:bg-red-50/30" onClick={() => document.getElementById('task-image-manual').click()}>
-                 <UploadCloud className="text-slate-300 w-12 h-12 mb-3" />
-                 <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Subir Imagen</span>
-               </div>
-             )}
-             <input type="file" id="task-image-manual" accept="image/*" onChange={handleImageUpload} className="hidden" />
-           </div>
-           <select value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})} className="w-full p-4 mt-1 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 shadow-sm cursor-pointer">
-             <option value="TÉCNICA">Técnica</option>
-             <option value="TÁCTICA">Táctica</option>
-             <option value="FÍSICA">Física</option>
-             <option value="EMOCIONAL">Emocional</option>
-           </select>
-        </div>
-        <div className="w-full md:w-2/3 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-5">
-           <div>
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo Principal *</label>
-             <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950" placeholder="Ej: Blocaje Frontal Raso..." value={formData.mainObjective} onChange={e=>setFormData({...formData, mainObjective: e.target.value})} />
-           </div>
-           <div>
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivos Secundarios</label>
-             <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700" placeholder="Ej: Perfilamiento, control orientado..." value={formData.secondaryContents} onChange={e=>setFormData({...formData, secondaryContents: e.target.value})} />
-           </div>
-           <div>
-             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción de Tarea</label>
-             <textarea className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-32 resize-none" placeholder="1. Coordinación en escalera..." value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} />
-           </div>
-           <div className="flex flex-col md:flex-row gap-4">
-             <div className="flex-1">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Variante</label>
-               <textarea className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-20 resize-none" placeholder="Ej: Cambiar lateralidad..." value={formData.variant} onChange={e=>setFormData({...formData, variant: e.target.value})} />
-             </div>
-             <div className="md:w-1/3 flex flex-col gap-4">
-               <div>
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duración</label>
-                 <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950" placeholder="Ej: 15 minutos" value={formData.duration} onChange={e=>setFormData({...formData, duration: e.target.value})} />
-               </div>
-               <div>
-                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visibilidad</label>
-                 <div className="flex gap-2 mt-1">
-                   <button type="button" onClick={() => setFormData({...formData, visibility: 'public'})} className={`flex-1 py-3 px-1 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 ${formData.visibility === 'public' ? 'bg-blue-950 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Globe size={12}/> Pública</button>
-                   <button type="button" onClick={() => setFormData({...formData, visibility: 'private'})} className={`flex-1 py-3 px-1 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 ${formData.visibility === 'private' ? 'bg-red-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Lock size={12}/> Privada</button>
-                 </div>
-               </div>
-             </div>
-           </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent, onLoadSession, showToast, onDeleteSession, onCloneSession, onEvaluateSession, onMarkAttendance }) {
+function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent, onLoadSession, showToast }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [assignDate, setAssignDate] = useState({});
   
@@ -1235,7 +1050,6 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
     const startDay = firstDay === 0 ? 6 : firstDay - 1;
     const days = [];
     for (let i = 0; i < (startDay < 0 ? 6 : startDay); i++) days.push(null);
-    // Usamos las 12:00:00 para evitar que problemas con el horario de verano cambien la fecha
     for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i, 12, 0, 0));
     return days;
   };
@@ -1300,9 +1114,6 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
                        return (
                          <div key={`event-${sessionItem.id}-${dateString}-${sIdx}`} onClick={() => onLoadSession(sessionItem)} className="bg-blue-950 rounded-md md:rounded-lg p-1 shadow-sm relative cursor-pointer hover:bg-blue-900 transition-colors flex flex-col items-center justify-center shrink-0 min-h-[40px] group border border-blue-800" title={String(sessionItem.name || 'Ver Sesión')}>
                            <div className="absolute top-0.5 left-0.5 right-0.5 flex justify-between z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); onMarkAttendance(sessionItem, dateString); }} className="text-white hover:text-emerald-400 p-0.5" title="Pasar Lista">
-                                 <UserCheck size={10} strokeWidth={2}/>
-                              </button>
                               <button onClick={(e) => { e.stopPropagation(); onRemoveEvent(dateString, sessionItem.id); }} className="text-white/50 hover:text-red-400 p-0.5" title="Quitar del calendario">
                                  <X size={10} strokeWidth={2}/>
                               </button>
@@ -1315,11 +1126,6 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
                                 {String(sessionNum)}
                               </span>
                            </div>
-                           {sessionItem.attendance && (
-                              <div className="absolute bottom-0.5 right-0.5 text-emerald-400" title="Lista pasada">
-                                 <CheckCircle2 size={8} strokeWidth={3} />
-                              </div>
-                           )}
                          </div>
                        );
                      })}
@@ -1367,40 +1173,28 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
                       </div>
                     </div>
                     
-                    {/* Botones de acción siempre visibles */}
-                    <div className="flex flex-col gap-2 mt-3">
-                       <div className="flex gap-1">
-                          <button onClick={() => onLoadSession(s)} className="flex items-center justify-center gap-1 p-2 bg-blue-950 text-white rounded-lg hover:bg-blue-900 shadow-md flex-1" title="Editar Sesión"><Edit2 size={12}/> <span className="text-[8px] font-bold uppercase">Editar</span></button>
-                          <button onClick={() => onCloneSession && onCloneSession(s)} className="flex items-center justify-center gap-1 p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 border border-emerald-100 shadow-sm flex-1" title="Duplicar Sesión"><Copy size={12}/> <span className="text-[8px] font-bold uppercase">Clonar</span></button>
-                          <button onClick={() => onDeleteSession && onDeleteSession(s)} className="flex items-center justify-center gap-1 p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 border border-red-100 shadow-sm flex-1" title="Eliminar"><Trash2 size={12}/> <span className="text-[8px] font-bold uppercase">Borrar</span></button>
-                       </div>
-                       <div className="flex items-center gap-1 mt-1 border-t border-slate-200 pt-2">
-                          <input 
-                            type="date" 
-                            value={assignDate[s.id] || ''} 
-                            onChange={(e) => setAssignDate({...assignDate, [s.id]: e.target.value})} 
-                            className="text-[10px] font-bold text-slate-600 p-1.5 border border-slate-200 rounded-lg flex-1 outline-none focus:border-blue-400 bg-white"
-                          />
-                          <button 
-                            onClick={() => {
-                               if(assignDate[s.id]) {
-                                  onAddEvent(assignDate[s.id], s);
-                                  showToast("Sesión añadida al " + assignDate[s.id]);
-                                  setAssignDate({...assignDate, [s.id]: ''});
-                               } else {
-                                  showToast("Selecciona una fecha primero", "error");
-                               }
-                            }}
-                            className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1 px-2"
-                            title="Añadir a fecha seleccionada"
-                          >
-                            <Plus size={14}/>
-                          </button>
-                          {/* 6 puntos (GripVertical) para la asistencia */}
-                          <button onClick={() => onMarkAttendance(s, assignDate[s.id] || localToday)} className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors" title="Pasar Asistencia">
-                            <GripVertical size={16} />
-                          </button>
-                       </div>
+                    <div className="flex items-center gap-1 mt-3 pt-2 border-t border-slate-200">
+                       <input 
+                         type="date" 
+                         value={assignDate[s.id] || ''} 
+                         onChange={(e) => setAssignDate({...assignDate, [s.id]: e.target.value})} 
+                         className="text-[10px] font-bold text-slate-600 p-1.5 border border-slate-200 rounded-lg flex-1 outline-none focus:border-blue-400 bg-white"
+                       />
+                       <button 
+                         onClick={() => {
+                            if(assignDate[s.id]) {
+                               onAddEvent(assignDate[s.id], s);
+                               showToast("Sesión añadida al " + assignDate[s.id]);
+                               setAssignDate({...assignDate, [s.id]: ''});
+                            } else {
+                               showToast("Selecciona una fecha primero", "error");
+                            }
+                         }}
+                         className="bg-blue-600 text-white p-1.5 rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center justify-center gap-1 px-2"
+                         title="Añadir a fecha seleccionada"
+                       >
+                         <Plus size={14}/>
+                       </button>
                     </div>
                   </div>
                 )})
@@ -1413,291 +1207,20 @@ function CalendarView({ savedSessions, calendarEvents, onAddEvent, onRemoveEvent
   );
 }
 
-function AttendanceModal({ sessionObj, squad, onClose, onSave, showToast }) {
-  const { sessionItem, dateString } = sessionObj;
-  const sessionGks = squad.filter(gk => sessionItem.data?.gkIds?.includes(gk.id));
-  const [attendance, setAttendance] = useState(sessionItem.attendance || sessionGks.reduce((acc, gk) => ({...acc, [gk.id]: true}), {}));
-
-  const handleSave = () => {
-     onSave(sessionItem.id, dateString, attendance);
-     showToast("Asistencia guardada con éxito");
-     onClose();
-  };
-
+function SessionsHistoryView({ savedSessions, onLoadSession, onDeleteSession }) {
   return (
-    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[400] flex items-center justify-center p-4">
-       <div className="bg-white p-8 rounded-[2.5rem] max-w-sm w-full shadow-2xl relative text-left animate-in zoom-in-95 duration-200">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-full transition-colors"><X size={20}/></button>
-          <div className="flex items-center gap-3 mb-1">
-             <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center border border-emerald-100"><UserCheck size={18}/></div>
-             <h3 className="text-xl font-black text-blue-950 uppercase tracking-tighter leading-none">Pasar Lista</h3>
-          </div>
-          <p className="text-slate-500 font-medium text-xs mb-6 truncate pl-13">{String(sessionItem.name || '')}</p>
-
-          {sessionGks.length === 0 ? (
-             <p className="text-center text-slate-400 font-bold uppercase tracking-widest text-xs py-8 border-2 border-dashed border-slate-200 rounded-[2rem]">No hay porteros convocados</p>
-          ) : (
-             <div className="space-y-3 mb-6">
-                {sessionGks.map(gk => (
-                   <div key={`att-${gk.id}`} className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100 shadow-sm">
-                      <div className="flex items-center gap-3">
-                         <img src={gk.avatar} className="w-8 h-8 rounded-full object-cover border border-slate-200" alt="avatar" />
-                         <span className="text-[10px] font-black text-blue-950 uppercase">{String(gk.name || '')}</span>
-                      </div>
-                      <div className="flex gap-2">
-                         <button onClick={() => setAttendance({...attendance, [gk.id]: true})} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${attendance[gk.id] ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 hover:bg-emerald-100 hover:text-emerald-600'}`} title="Asistió"><Check size={14} strokeWidth={3}/></button>
-                         <button onClick={() => setAttendance({...attendance, [gk.id]: false})} className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${!attendance[gk.id] ? 'bg-red-500 text-white shadow-md' : 'bg-slate-200 text-slate-400 hover:bg-red-100 hover:text-red-600'}`} title="No Asistió"><X size={14} strokeWidth={3}/></button>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          )}
-          <button onClick={handleSave} className="w-full py-4 rounded-2xl font-black text-white bg-blue-950 hover:bg-blue-900 shadow-lg uppercase text-xs tracking-widest transition-colors">Guardar Asistencia</button>
-       </div>
-    </div>
-  )
-}
-
-function AIAssistantModal({ onClose, tasks, setSessionCart, sessionData, setSessionData, setActiveTab, showToast }) {
-  const [goalkeepers, setGoalkeepers] = useState('');
-  const [mainObj, setMainObj] = useState('');
-  const [tacticalObj, setTacticalObj] = useState('');
-  const [taskCount, setTaskCount] = useState(4);
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  const generateSession = () => {
-    setIsGenerating(true);
-    setTimeout(() => {
-      let scoredTasks = tasks.map(t => {
-        let score = 0;
-        const textToSearch = `${t.title} ${t.mainObjective} ${t.secondaryContents} ${t.category} ${t.description}`.toLowerCase();
-        if (mainObj && textToSearch.includes(mainObj.toLowerCase())) score += 3;
-        if (tacticalObj && textToSearch.includes(tacticalObj.toLowerCase())) score += 2;
-        score += Math.random(); 
-        return { ...t, score };
-      });
-      scoredTasks.sort((a, b) => b.score - a.score);
-      const pickedTasks = scoredTasks.slice(0, taskCount).map(t => { const { score, ...rest } = t; return rest; });
-      if (pickedTasks.length === 0) { showToast("No hay suficientes tareas", "error"); setIsGenerating(false); return; }
-      
-      setSessionData({ 
-        ...sessionData, 
-        goalkeepers: goalkeepers || sessionData.goalkeepers, 
-        objTecnico: mainObj ? `• Trabajo Principal: ${mainObj}\n• Perfilamiento\n• Blocajes` : sessionData.objTecnico, 
-        objTactico: tacticalObj ? `• Concepto: ${tacticalObj}\n• Reubicación\n• Lectura de juego` : sessionData.objTactico 
-      });
-      
-      const newCart = [null, null, null, null];
-      pickedTasks.forEach((t, i) => { if(i < 4) newCart[i] = t; });
-      setSessionCart(newCart); 
-      
-      setIsGenerating(false); 
-      showToast(`¡Sesión generada con ${pickedTasks.length} tareas!`, "success"); 
-      setActiveTab('builder'); 
-      onClose();
-    }, 1500);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[300] flex items-center justify-center p-4">
-       <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-          <div className="bg-blue-950 p-6 flex items-center justify-between text-white shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><BrainCircuit size={20} className="text-blue-200"/></div>
-              <div><h3 className="font-black uppercase tracking-widest text-sm">Asistente Inteligente</h3><p className="text-[10px] text-blue-300">Generador Automático</p></div>
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in md:pb-10 pb-24 text-left">
+      <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div><h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">Mis Sesiones</h3><p className="text-slate-500 text-sm mt-1">Historial de plantillas guardadas.</p></div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {(!savedSessions || savedSessions.length === 0) ? (<div className="col-span-full py-20 text-center flex flex-col items-center gap-4 text-slate-300"><Inbox size={60} strokeWidth={1}/><span className="font-bold uppercase tracking-widest text-sm">No tienes plantillas guardadas</span></div>) : (
+          savedSessions.map((s, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm flex flex-col group">
+              <div className="flex items-start justify-between"><div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FolderArchive size={20} /></div><div><h4 className="font-black text-blue-950 uppercase text-sm">{String(s.name || '')}</h4><p className="text-xs text-slate-500 mt-1">{String(s.date || '')} • {s.cart?.filter(Boolean).length || 0} tareas</p></div></div></div>
+              <div className="flex gap-2 mt-4"><button onClick={() => onLoadSession(s)} className="p-2 bg-blue-950 text-white rounded-xl flex-1 text-[9px] font-bold uppercase">Editar</button><button onClick={() => onDeleteSession(s)} className="p-2 bg-red-50 text-red-600 rounded-xl flex-1 text-[9px] font-bold uppercase">Borrar</button></div>
             </div>
-            <button onClick={onClose} className="p-2 bg-white/10 hover:bg-red-500 rounded-full transition-colors"><X size={16}/></button>
-          </div>
-          <div className="p-6 flex-1 overflow-y-auto bg-slate-50 flex flex-col gap-5 text-left">
-             <p className="text-xs font-medium text-slate-500 mb-2">Rellena los criterios y montaré la sesión completa al instante buscando en tu biblioteca.</p>
-             <div className="space-y-4">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Porteros Convocados</label>
-                  <input type="text" className="w-full p-4 mt-1 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 text-xs" placeholder="Ej: Jorge, Francisco..." value={goalkeepers} onChange={e=>setGoalkeepers(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Objetivo Principal (Técnico)</label>
-                  <input type="text" className="w-full p-4 mt-1 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 text-xs" placeholder="Ej: Blocaje lateral raso..." value={mainObj} onChange={e=>setMainObj(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Objetivo Táctico (Opcional)</label>
-                  <input type="text" className="w-full p-4 mt-1 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 text-xs" placeholder="Ej: Coberturas..." value={tacticalObj} onChange={e=>setTacticalObj(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2 flex justify-between"><span>Cantidad de tareas</span><span className="text-blue-950 text-sm">{taskCount}</span></label>
-                  <input type="range" min="1" max="4" value={taskCount} onChange={(e) => setTaskCount(Number(e.target.value))} className="w-full h-2 mt-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
-                </div>
-                <button onClick={generateSession} disabled={isGenerating} className="w-full py-4 mt-4 rounded-2xl font-black text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2">
-                  {isGenerating ? <RefreshCw size={16} className="animate-spin"/> : <Zap size={16}/>} {isGenerating ? 'Analizando...' : 'Generar Sesión'}
-                </button>
-             </div>
-          </div>
-       </div>
-    </div>
-  );
-}
-
-function UploadView({ onTasksExtracted, currentUser, showToast }) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [visibility, setVisibility] = useState('public');
-  const fileInputRef = useRef(null);
-
-  const compressImageForAI = (file) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1000; 
-        let width = img.width;
-        let height = img.height;
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.8)); 
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const cropImageReal = (file) => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const cropX = img.width * 0.385; 
-        const cropWidth = img.width - cropX;
-        canvas.width = cropWidth; canvas.height = img.height;
-        ctx.drawImage(img, cropX, 0, cropWidth, img.height, 0, 0, cropWidth, img.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.95));
-      };
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const extractDataFromImage = async (base64Image) => {
-    // AQUÍ ESTÁ TU NUEVA CLAVE PERFECTA DE LA CUENTA PRINCIPAL
-    const apiKey = "AIzaSyDwYtwUrOxusNh_x9Lxu6W1fnLGTQiLlF4";
-    const base64Data = base64Image.split(',')[1];
-    
-    const payload = {
-      contents: [{
-        role: "user",
-        parts: [
-          { text: "Extrae la información de esta ficha. Responde ÚNICAMENTE con un JSON válido. Claves: 'mainObjective', 'secondaryContents', 'description', 'variant', 'duration'." },
-          { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-        ]
-      }]
-    };
-
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-    ];
-
-    for (let url of endpoints) {
-      try {
-        const response = await fetch(url, { 
-          method: 'POST', 
-          headers: { 'Content-Type': 'application/json' }, 
-          body: JSON.stringify(payload) 
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-             text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-             return JSON.parse(text);
-          }
-        }
-      } catch (e) {
-         console.error(`Intento de IA fallido:`, e);
-      }
-    }
-    return null; 
-  };
-
-  const handleUpload = async (files) => {
-    if (!files || files.length === 0) return;
-    setIsProcessing(true);
-    const extractedTasks = [];
-    
-    for (let i = 0; i < files.length; i++) {
-      try {
-        const file = files[i];
-        
-        const compressedForAI = await compressImageForAI(file);
-        const croppedUrl = await cropImageReal(file);
-        const ocrData = await extractDataFromImage(compressedForAI);
-        
-        // Si hay algún micro-corte, usamos el nombre del archivo para que la app siga viéndose perfecta
-        let defaultTitle = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, ' ').toUpperCase();
-        if (!defaultTitle || defaultTitle === 'IMAGE') defaultTitle = 'NUEVA TAREA EXTRAÍDA';
-
-        const fallbackData = {
-           mainObjective: defaultTitle,
-           secondaryContents: 'Haz clic en editar para añadir contenidos',
-           description: 'El gráfico se ha procesado y recortado correctamente.\n\n(Nota: Usa el botón del lápiz para introducir la descripción de la tarea manualmente).',
-           variant: 'Sin variantes',
-           duration: '15 min'
-        };
-        
-        const finalData = ocrData || fallbackData;
-        
-        extractedTasks.push({ 
-          ...finalData, 
-          id: `ext-${Date.now()}-${i}`, 
-          title: finalData.mainObjective || 'Tarea sin título', 
-          imageUrl: croppedUrl, 
-          visibility: visibility, 
-          category: 'TÉCNICA', 
-          author: { name: currentUser.name, avatar: currentUser.avatar }, 
-          likes: [], 
-          isAutoCropped: true 
-        });
-      } catch (err) { 
-        console.error("Error procesando fichero", err); 
-      }
-    }
-    
-    setIsProcessing(false); 
-    onTasksExtracted(extractedTasks); 
-    showToast(`Se procesaron ${extractedTasks.length} tareas`);
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto mt-10 text-center md:pb-10 pb-24 animate-in fade-in">
-      <div className="bg-white p-14 rounded-[3.5rem] border shadow-2xl border-slate-100">
-        <UploadCloud size={60} className="text-blue-600 mx-auto mb-6" />
-        <h3 className="text-3xl font-black text-blue-950 uppercase italic mb-3 leading-tight">Procesador de tareas</h3>
-        <p className="text-slate-400 mb-8 font-medium px-4">Recorte inteligente de gráficos y subida de datos.</p>
-        
-        {!isProcessing && (
-          <div className="mb-6">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Visibilidad de las tareas extraídas</label>
-            <div className="flex justify-center gap-3">
-              <button type="button" onClick={() => setVisibility('public')} className={`px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${visibility === 'public' ? 'bg-blue-950 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Globe size={14}/> Pública</button>
-              <button type="button" onClick={() => setVisibility('private')} className={`px-6 py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-1.5 ${visibility === 'private' ? 'bg-red-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Lock size={14}/> Privada (Solo yo)</button>
-            </div>
-          </div>
-        )}
-
-        {!isProcessing ? (
-          <div onClick={() => fileInputRef.current?.click()} className="border-4 border-dashed border-slate-200 rounded-[2.5rem] p-12 hover:border-red-500 cursor-pointer transition-all bg-slate-50/50 hover:bg-red-50/30 group">
-            <input type="file" multiple ref={fileInputRef} className="hidden" accept="image/*" onChange={e => handleUpload(e.target.files)} />
-            <p className="font-black text-slate-400 uppercase tracking-widest group-hover:text-red-600 transition-colors">SUBIR CAPTURA DE TAREA</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center py-10">
-            <RefreshCw className="h-12 w-12 text-red-600 animate-spin mb-4" />
-            <h4 className="font-black text-xl uppercase italic">PROCESANDO GRÁFICO...</h4>
-          </div>
+          ))
         )}
       </div>
     </div>
@@ -1708,82 +1231,16 @@ function TrashView({ trashedTasks, onRestoreTask, onDeleteTaskForever, trashedSe
   return (
     <div className="max-w-7xl mx-auto space-y-6 md:pb-10 pb-24 text-left animate-in fade-in">
       <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div><h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">Papelera de Reciclaje</h3><p className="text-slate-500 text-sm mt-1">Recupera elementos eliminados o bórralos definitivamente.</p></div>
+        <div><h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">Papelera</h3><p className="text-slate-500 text-sm mt-1">Recupera elementos o bórralos definitivamente.</p></div>
       </div>
-      
-      {/* TAREAS */}
       <h4 className="text-sm font-black text-blue-950 uppercase tracking-widest pl-4 mt-6">Tareas Eliminadas</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-6">
-        {trashedTasks.length === 0 ? (<div className="col-span-full py-10 text-slate-300 font-bold uppercase tracking-widest text-center border-2 border-dashed border-slate-200 rounded-[2.5rem]">No hay tareas en la papelera</div>) : (
+        {trashedTasks.length === 0 ? (<div className="col-span-full py-16 flex flex-col items-center gap-4 text-slate-300"><Trash2 size={60} strokeWidth={1}/><span className="font-bold uppercase tracking-widest text-sm text-center">La papelera está vacía</span></div>) : (
           trashedTasks.map(t => (
-            <div key={`trash-task-${t.id}`} className="relative group bg-white rounded-[2.5rem] border-2 shadow-sm border-slate-100 flex flex-col text-left opacity-75 hover:opacity-100 transition-opacity">
-              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-100 transition-opacity">
-                <button onClick={() => { onRestoreTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-emerald-500 text-white hover:bg-emerald-600" title="Restaurar Tarea"><ArchiveRestore size={14} strokeWidth={3}/></button>
-                <button onClick={() => { if(window.confirm('¿Eliminar DEFINITIVAMENTE? Esta acción no se puede deshacer.')) { onDeleteTaskForever(t); } }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-red-600 text-white hover:bg-red-700" title="Eliminar definitivamente"><Trash2 size={14} strokeWidth={3}/></button>
-              </div>
+            <div key={t.id} className="relative group bg-white rounded-[2.5rem] border-2 shadow-sm border-slate-100 flex flex-col text-left opacity-75 hover:opacity-100 transition-opacity">
+              <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-100"><button onClick={() => onRestoreTask(t)} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-emerald-500 text-white"><ArchiveRestore size={14}/></button><button onClick={() => { if(window.confirm('¿Borrar definitivamente?')) onDeleteTaskForever(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-red-600 text-white"><Trash2 size={14}/></button></div>
               <div className="relative aspect-[16/9] overflow-hidden rounded-t-[2.5rem]"><img src={t.imageUrl} className="w-full h-full object-cover grayscale" alt="img"/></div>
-              <div className="p-5 flex-1 flex flex-col"><div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{String(t.category || 'Técnica')}</div><h3 className="font-black text-slate-500 uppercase text-sm line-clamp-2 leading-tight min-h-[2.5rem] line-through">{String(t.mainObjective || t.title || '')}</h3></div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {/* SESIONES */}
-      <h4 className="text-sm font-black text-blue-950 uppercase tracking-widest pl-4 border-t border-slate-200 pt-6">Sesiones Eliminadas</h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10">
-         {trashedSessions.length === 0 ? (<div className="col-span-full py-10 text-slate-300 font-bold uppercase tracking-widest text-center border-2 border-dashed border-slate-200 rounded-[2.5rem]">No hay sesiones en la papelera</div>) : (
-            trashedSessions.map(s => (
-              <div key={`trash-sess-${s.id}`} className="bg-white p-6 rounded-[2.5rem] border-2 border-slate-100 shadow-sm flex flex-col group opacity-75 hover:opacity-100 transition-opacity">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0"><FolderArchive size={16} /></div>
-                    <div>
-                      <h4 className="font-black text-slate-500 uppercase text-sm tracking-tight line-through">{String(s.name || '')}</h4>
-                      <p className="text-xs font-medium text-slate-400 mt-1">Eliminada de: {String(s.date)}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 opacity-100 transition-opacity">
-                     <button onClick={() => { onRestoreSession(s); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-emerald-500 text-white hover:bg-emerald-600"><ArchiveRestore size={14} strokeWidth={3}/></button>
-                     <button onClick={() => {
-                         if(window.confirm('¿Eliminar DEFINITIVAMENTE la sesión? Esta acción no se puede deshacer.')) {
-                           onDeleteSessionForever(s);
-                         }
-                     }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-md bg-red-600 text-white hover:bg-red-700"><Trash2 size={14} strokeWidth={3}/></button>
-                  </div>
-                </div>
-              </div>
-            ))
-         )}
-      </div>
-    </div>
-  );
-}
-
-function SessionsHistoryView({ savedSessions, onLoadSession, onDeleteSession, onCloneSession, onEvaluateSession }) {
-  return (
-    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in md:pb-10 pb-24 text-left">
-      <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
-        <div><h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">Mis Sesiones Guardadas</h3><p className="text-slate-500 text-sm mt-1">Historial de plantillas para reutilizar estructuras o evaluarlas.</p></div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {(!savedSessions || savedSessions.length === 0) ? (<div className="col-span-full p-10 text-center text-slate-300 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">Aún no has guardado ninguna plantilla</div>) : (
-          savedSessions.map((s, idx) => (
-            <div key={`hist-${s.id}-${idx}`} className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col group">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0"><FolderArchive size={20} /></div><div><h4 className="font-black text-blue-950 uppercase text-sm tracking-tight leading-tight">{String(s.name || '')}</h4><p className="text-xs font-medium text-slate-500 mt-1">Guardada el: {String(s.date || '')} • {s.cart?.filter(Boolean).length || 0} tareas</p></div></div>
-              </div>
-              <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:items-center transition-opacity">
-                   <button onClick={() => onEvaluateSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-yellow-50 text-yellow-600 rounded-xl hover:bg-yellow-100 border border-yellow-100 shadow-sm flex-1" title="Evaluar Sesión"><MessageSquareQuote size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Evaluar</span></button>
-                   <button onClick={() => onCloneSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-100 border border-emerald-100 shadow-sm flex-1" title="Duplicar Sesión"><Copy size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Clonar</span></button>
-                   <button onClick={() => onLoadSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-blue-950 text-white rounded-xl hover:bg-blue-900 shadow-md flex-1" title="Editar Sesión"><Edit2 size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Editar</span></button>
-                   <button onClick={() => onDeleteSession(s)} className="flex items-center justify-center gap-1.5 p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 border border-red-100 shadow-sm flex-1" title="Eliminar"><Trash2 size={14}/> <span className="text-[9px] font-bold uppercase tracking-widest">Borrar</span></button>
-              </div>
-              {s.rating && (
-                <div className="mt-4 bg-slate-50 rounded-2xl p-3 border border-slate-100 animate-in fade-in">
-                  <div className="flex items-center gap-1 mb-1"><Star size={12} fill="#eab308" className="text-yellow-500" /><span className="font-black text-xs text-blue-950">{s.rating}/10</span></div>
-                  {s.evaluationComment && <p className="text-[10px] text-slate-500 italic line-clamp-2">"{String(s.evaluationComment)}"</p>}
-                </div>
-              )}
+              <div className="p-5 flex-1 flex flex-col"><div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{String(t.category)}</div><h3 className="font-black text-slate-500 uppercase text-sm line-through">{String(t.mainObjective)}</h3></div>
             </div>
           ))
         )}
@@ -1792,47 +1249,142 @@ function SessionsHistoryView({ savedSessions, onLoadSession, onDeleteSession, on
   );
 }
 
-function ChatView({ messages, onSendMessage, currentUser, users, onClose }) {
-  const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef(null);
+function CreateTaskView({ onTaskSaved, currentUser, editingTask, onCancelEdit, showToast }) {
+  const [formData, setFormData] = useState(
+    editingTask || { mainObjective: '', secondaryContents: '', description: '', variant: '', duration: '', category: 'TÉCNICA', imageUrl: '', visibility: 'public' }
+  );
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) { 
+      const reader = new FileReader(); 
+      reader.onloadend = () => { setFormData({ ...formData, imageUrl: String(reader.result) }); }; 
+      reader.readAsDataURL(file); 
+    }
+  };
 
-  const handleSend = (e) => {
-    e.preventDefault(); if (!newMessage.trim()) return;
-    onSendMessage(String(newMessage));
-    setNewMessage('');
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.mainObjective.trim() || !formData.imageUrl) return showToast("El Objetivo y el Gráfico son obligatorios.", "error");
+    onTaskSaved({ ...formData, id: editingTask ? editingTask.id : `manual-${Date.now()}`, title: formData.mainObjective, author: formData.author || { name: currentUser.name, avatar: currentUser.avatar }, likes: formData.likes || [], comments: [] });
   };
 
   return (
-    <div className="w-[360px] h-[550px] max-h-[80vh] flex flex-col bg-white rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-5 duration-200">
-      <div className="bg-blue-950 p-4 text-white flex justify-between items-center shrink-0">
-         <div className="flex items-center gap-3"><div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center"><MessageSquare size={20} className="text-blue-200"/></div><div className="text-left"><h3 className="text-base font-black uppercase italic tracking-tighter leading-tight">Chat Departamento de Porteros</h3><p className="text-blue-300 text-[10px] font-medium mt-1">En línea</p></div></div>
-         <button onClick={onClose} className="w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-full md:hidden"><X size={16} /></button>
+    <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in pb-20 text-left">
+      <div className="bg-white p-8 rounded-[3rem] border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
+        <div>
+          <h3 className="text-2xl font-black text-blue-950 uppercase italic tracking-tighter">{editingTask ? 'Editar Tarea' : 'Crear Tarea Manual'}</h3>
+          <p className="text-slate-500 text-sm mt-1">Añade o edita los campos y el gráfico de la tarea.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {editingTask && <button onClick={onCancelEdit} className="px-6 py-4 rounded-2xl font-black uppercase text-slate-500 bg-slate-100 hover:bg-slate-200">Cancelar</button>}
+          <button onClick={handleSubmit} className="flex items-center gap-3 px-8 py-4 rounded-2xl font-black uppercase shadow-xl bg-red-600 text-white hover:bg-red-700"><Save size={20}/> Guardar Tarea</button>
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
-        {messages.map(msg => {
-          const sender = users.find(u => String(u.id) === String(msg.senderId)) || { name: 'Desconocido', avatar: '' };
-          const isMe = String(msg.senderId) === String(currentUser?.id);
-          return (
-            <div key={`msg-${msg.id}`} className={`flex gap-2 ${isMe ? 'flex-row-reverse' : ''}`}><img src={sender.avatar || FALLBACK_LOGO} className="w-6 h-6 rounded-full object-cover shrink-0 border border-slate-200" alt="avatar"/><div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%]`}>
-              <div className="flex items-baseline gap-2 mb-0.5">
-                <span className="text-[8px] font-black text-slate-500 uppercase">{isMe ? 'Tú' : String(sender?.name || 'User').split(' ')[0]}</span>
-                <span className="text-[7px] font-bold text-slate-400">{String(msg.timestamp)}</span>
-              </div>
-              <div className={`px-3 py-2 rounded-2xl shadow-sm text-[10px] font-medium leading-relaxed ${isMe ? 'bg-blue-950 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'}`}>
-                {String(msg.text)}
-              </div>
-            </div></div>
-          );
-        })}
-        <div ref={messagesEndRef} />
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-1/3 space-y-4 flex flex-col">
+           <h4 className="text-sm font-black text-blue-950 uppercase tracking-widest flex items-center gap-2"><ImageIcon size={18}/> Gráfico</h4>
+           <div className="bg-white p-2 rounded-[2.5rem] border border-slate-200 shadow-sm flex-1 flex flex-col items-center justify-center text-center relative overflow-hidden group min-h-[250px]">
+             {formData.imageUrl ? (
+               <>
+                 <img src={formData.imageUrl} className="w-full h-full object-cover rounded-[2rem]" alt="Preview"/>
+                 <div className="absolute inset-0 bg-blue-950/50 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer" onClick={() => document.getElementById('task-image-manual').click()}><RefreshCw className="text-white w-10 h-10" /></div>
+               </>
+             ) : (
+               <div className="cursor-pointer flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-slate-200 rounded-[2rem] hover:border-red-400 hover:bg-red-50/30" onClick={() => document.getElementById('task-image-manual').click()}>
+                 <div className="text-slate-300 w-12 h-12 mb-3"><ImageIcon size={48}/></div>
+                 <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Subir Imagen</span>
+               </div>
+             )}
+             <input type="file" id="task-image-manual" accept="image/*" onChange={handleImageUpload} className="hidden" />
+           </div>
+           <select value={formData.category} onChange={e=>setFormData({...formData, category: e.target.value})} className="w-full p-4 mt-1 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 shadow-sm cursor-pointer">
+             <option value="TÉCNICA">Técnica</option>
+             <option value="TÁCTICA">Táctica</option>
+             <option value="FÍSICA">Física</option>
+             <option value="EMOCIONAL">Emocional</option>
+           </select>
+        </div>
+        <div className="w-full md:w-2/3 bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm space-y-5">
+           <div>
+             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivo Principal *</label>
+             <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950" placeholder="Ej: Blocaje Frontal Raso..." value={formData.mainObjective} onChange={e=>setFormData({...formData, mainObjective: e.target.value})} />
+           </div>
+           <div>
+             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Objetivos Secundarios</label>
+             <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700" placeholder="Ej: Perfilamiento, control orientado..." value={formData.secondaryContents} onChange={e=>setFormData({...formData, secondaryContents: e.target.value})} />
+           </div>
+           <div>
+             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción de Tarea</label>
+             <textarea className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-32 resize-none" placeholder="1. Coordinación en escalera..." value={formData.description} onChange={e=>setFormData({...formData, description: e.target.value})} />
+           </div>
+           <div className="flex flex-col md:flex-row gap-4">
+             <div className="flex-1">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Variante</label>
+               <textarea className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium text-slate-700 h-20 resize-none" placeholder="Ej: Cambiar lateralidad..." value={formData.variant} onChange={e=>setFormData({...formData, variant: e.target.value})} />
+             </div>
+             <div className="md:w-1/3 flex flex-col gap-4">
+               <div>
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Duración</label>
+                 <input type="text" className="w-full p-4 mt-1 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950" placeholder="Ej: 15 minutos" value={formData.duration} onChange={e=>setFormData({...formData, duration: e.target.value})} />
+               </div>
+               <div>
+                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visibilidad</label>
+                 <div className="flex gap-2 mt-1">
+                   <button type="button" onClick={() => setFormData({...formData, visibility: 'public'})} className={`flex-1 py-3 px-1 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 ${formData.visibility === 'public' ? 'bg-blue-950 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Globe size={12}/> Pública</button>
+                   <button type="button" onClick={() => setFormData({...formData, visibility: 'private'})} className={`flex-1 py-3 px-1 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-1 ${formData.visibility === 'private' ? 'bg-red-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100'}`}><Lock size={12}/> Privada</button>
+                 </div>
+               </div>
+             </div>
+           </div>
+        </div>
       </div>
-      <div className="p-3 bg-white border-t border-slate-200 shrink-0">
-        <form onSubmit={handleSend} className="flex items-center gap-2">
-          <input type="text" className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-full outline-none focus:ring-2 focus:ring-blue-950 font-medium text-xs" placeholder="Mensaje..." value={newMessage} onChange={e => setNewMessage(e.target.value)} />
-          <button type="submit" disabled={!newMessage.trim()} className="w-10 h-10 bg-red-600 hover:bg-red-700 disabled:bg-slate-200 text-white rounded-full flex items-center justify-center"><Send size={16} className="ml-0.5" /></button>
-        </form>
+    </div>
+  );
+}
+function TaskDetailModal({ task, onClose }) {
+  const handleDownload = () => { const link = document.createElement('a'); link.href = task.imageUrl; link.download = `Grafico_${String(task.mainObjective || 'Tarea').replace(/\s+/g, '_')}.png`; document.body.appendChild(link); link.click(); document.body.removeChild(link); };
+  
+  return (
+    <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 md:p-8">
+      <div className="bg-slate-50 w-full max-w-6xl h-[90vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white/10">
+        <div className="bg-white px-8 py-6 border-b border-slate-200 flex justify-between items-center shrink-0">
+          <div className="flex flex-col">
+            <h2 className="text-2xl md:text-3xl font-black text-blue-950 uppercase tracking-tighter leading-tight">{String(task.mainObjective || task.title || '')}</h2>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="bg-slate-100 text-slate-500 font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest">{String(task.category || 'Técnica')}</span>
+              <span className="text-slate-400 text-xs font-medium flex items-center gap-1"><Clock size={12}/> {String(task.duration || '')}</span>
+              {task.visibility === 'private' && (<span className="bg-red-50 text-red-600 border border-red-200 font-bold px-3 py-1 rounded-full text-[10px] uppercase tracking-widest flex items-center gap-1"><Lock size={10}/> Privada</span>)}
+            </div>
+          </div>
+          <button onClick={onClose} className="p-3 bg-slate-100 hover:bg-red-50 hover:text-red-500 rounded-2xl transition-colors"><X size={24}/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-8 flex flex-col lg:flex-row gap-8 text-left">
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-slate-200 flex-1 flex items-center justify-center overflow-hidden relative">
+              <img src={task.imageUrl} alt={task.title} className="w-full h-full object-contain max-h-[500px]" />
+            </div>
+            <button onClick={handleDownload} className="w-full bg-blue-950 hover:bg-blue-900 text-white font-black py-4 rounded-2xl flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg transition-all"><Download size={20} /> Descargar Gráfico</button>
+          </div>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 h-fit">
+            <div className="col-span-1 md:col-span-2 bg-emerald-50 border border-emerald-100 rounded-[2rem] p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-widest mb-3"><Target size={16} /> Objetivo Principal</div>
+              <p className="text-xl font-black text-emerald-950 leading-tight">{String(task.mainObjective || '')}</p>
+            </div>
+            <div className="col-span-1 md:col-span-2 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest mb-3"><List size={16} /> Objetivos Secundarios</div>
+              <p className="text-sm font-bold text-blue-950 leading-relaxed">{String(task.secondaryContents || 'No se han especificado contenidos secundarios.')}</p>
+            </div>
+            <div className="col-span-1 md:col-span-2 bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest mb-4"><BookOpen size={16} /> Descripción de Tarea</div>
+              <p className="text-sm font-medium text-slate-700 whitespace-pre-line leading-loose">{String(task.description || '')}</p>
+            </div>
+            <div className="col-span-1 md:col-span-2 border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-[2rem] p-6">
+              <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest mb-3"><RefreshCw size={16} /> Variantes Sugeridas</div>
+              <p className="text-sm font-medium text-slate-500 italic whitespace-pre-line leading-relaxed">{String(task.variant || 'No se han añadido variantes.')}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1874,7 +1426,7 @@ function LoginView({ users, onLogin }) {
 function AdminView({ users, onSaveUser, onToggleUserActive }) {
   const [isModal, setIsModal] = useState(false);
   const [editUser, setEditUser] = useState(null);
-  const [formData, setFormData] = useState({ name: '', username: '', password: '', avatar: '' });
+  const [formData, setFormData] = useState({ name: '', username: '', password: '', avatar: '', role: 'coach' });
 
   const handleImageUpload = (e) => { 
     const file = e.target.files[0]; 
@@ -1888,9 +1440,9 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
   const save = () => {
     if (!formData.name.trim() || !formData.username.trim() || !formData.password.trim()) return alert("Rellena todos los campos.");
     const finalAvatar = formData.avatar || (editUser ? editUser.avatar : `https://ui-avatars.com/api/?name=${formData.name.replace(/\s+/g, '+')}&background=CB3524&color=fff`);
-    const userToSave = editUser ? {...editUser, name: formData.name, username: formData.username, password: formData.password, avatar: finalAvatar} : { id: Date.now().toString(), name: formData.name, username: formData.username, password: formData.password, role: 'coach', active: true, avatar: finalAvatar };
+    const userToSave = editUser ? {...editUser, name: formData.name, username: formData.username, password: formData.password, avatar: finalAvatar, role: formData.role} : { id: Date.now().toString(), name: formData.name, username: formData.username, password: formData.password, role: formData.role, active: true, avatar: finalAvatar };
     onSaveUser(userToSave);
-    setIsModal(false); setFormData({ name: '', username: '', password: '', avatar: '' }); setEditUser(null);
+    setIsModal(false); setFormData({ name: '', username: '', password: '', avatar: '', role: 'coach' }); setEditUser(null);
   };
 
   return (
@@ -1900,7 +1452,7 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
           <h3 className="text-xl font-black uppercase italic tracking-tighter text-blue-950">Gestión de Entrenadores</h3>
           <p className="text-slate-400 text-sm">Control de accesos y perfiles técnicos.</p>
         </div>
-        <button onClick={()=>{setEditUser(null); setFormData({name:'', username:'', password:'', avatar:''}); setIsModal(true)}} className="bg-blue-950 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 uppercase text-xs shadow-md">
+        <button onClick={()=>{setEditUser(null); setFormData({name:'', username:'', password:'', avatar:'', role: 'coach'}); setIsModal(true)}} className="bg-blue-950 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 uppercase text-xs shadow-md">
           <UserPlus size={16}/> Nuevo
         </button>
       </div>
@@ -1912,10 +1464,11 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
               <div className="text-left">
                 <p className="font-black text-sm text-blue-950">{String(u.name || '')}</p>
                 <p className="text-xs font-medium text-slate-500">@{String(u.username || '')}</p>
+                <p className="text-[8px] text-red-500 font-bold uppercase">{String(u.role || '')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 pr-2">
-              <button onClick={()=>{setEditUser(u); setFormData({name:u.name, username:u.username, password:u.password, avatar: ''}); setIsModal(true)}} className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 rounded-lg"><Edit2 size={16}/></button>
+              <button onClick={()=>{setEditUser(u); setFormData({name:u.name, username:u.username, password:u.password, avatar: '', role: u.role || 'coach'}); setIsModal(true)}} className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 rounded-lg"><Edit2 size={16}/></button>
               {u.role !== 'admin' && <button onClick={()=>onToggleUserActive(u.id, !u.active)} className={`w-12 h-6 rounded-full relative transition-colors shadow-inner ${u.active?'bg-emerald-500':'bg-slate-300'}`}><div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow-sm ${u.active?'left-[26px]':'left-0.5'}`}/></button>}
             </div>
           </div>
@@ -1939,10 +1492,16 @@ function AdminView({ users, onSaveUser, onToggleUserActive }) {
                <input className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium" placeholder="Nombre completo" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})}/>
                <input className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium" placeholder="Usuario" value={formData.username} onChange={e=>setFormData({...formData, username: e.target.value})}/>
                <input className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-medium" placeholder="Contraseña" type="text" value={formData.password} onChange={e=>setFormData({...formData, password: e.target.value})}/>
+               
+               <select value={formData.role} onChange={e=>setFormData({...formData, role: e.target.value})} className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-900 font-bold text-blue-950 cursor-pointer appearance-none">
+                  <option value="coach">Entrenador</option>
+                  <option value="admin">Administrador</option>
+               </select>
+
              </div>
              <div className="pt-4 space-y-2">
                <button onClick={save} className="w-full bg-blue-950 text-white font-black py-4 rounded-2xl uppercase shadow-lg hover:bg-blue-900">Guardar Cambios</button>
-               <button onClick={()=>{setIsModal(false); setFormData({name:'', username:'', password:'', avatar:''}); setEditUser(null);}} className="w-full text-slate-400 font-bold py-3 hover:text-red-500">Cancelar</button>
+               <button onClick={()=>{setIsModal(false); setFormData({name:'', username:'', password:'', avatar:'', role:'coach'}); setEditUser(null);}} className="w-full text-slate-400 font-bold py-3 hover:text-red-500">Cancelar</button>
              </div>
           </div>
         </div>
@@ -1980,8 +1539,7 @@ export default function App() {
   const [editingTask, setEditingTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [sessionToDelete, setSessionToDelete] = useState(null);
-  const [evaluatingSession, setEvaluatingSession] = useState(null); 
-  const [attendanceSession, setAttendanceSession] = useState(null);
+
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessagesLength = useRef(0);
   const [toasts, setToasts] = useState([]);
@@ -2000,6 +1558,16 @@ export default function App() {
     const handler = (e) => { e.preventDefault(); setDeferredPrompt(e); };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  // INYECTAR EL FAVICON
+  useEffect(() => {
+    const link = document.querySelector("link[rel~='icon']") || document.createElement('link');
+    link.type = 'image/png';
+    link.rel = 'icon';
+    link.href = '/escudo.PNG';
+    document.head.appendChild(link);
+    document.title = "BiblioKeepers ATM";
   }, []);
 
   useEffect(() => {
@@ -2088,12 +1656,6 @@ export default function App() {
     await updateDoc(getDocRef('tasks', taskId), { likes: newLikes });
   };
   
-  const handleCloneTask = async (task) => {
-    const cloned = { ...task, id: `clone-${Date.now()}`, title: `${task.title} (Copia)`, mainObjective: `${task.mainObjective} (Copia)`, author: { name: liveUser.name, avatar: liveUser.avatar }, likes: [], comments: [] };
-    await setDoc(getDocRef('tasks', cloned.id), cleanData(cloned));
-    showToast("Tarea duplicada correctamente");
-  };
-  
   const handleSaveGk = async (gkData) => await setDoc(getDocRef('goalkeepers', gkData.id), cleanData(gkData));
   const handleDeleteGk = async (id) => await deleteDoc(getDocRef('goalkeepers', id));
 
@@ -2108,24 +1670,6 @@ export default function App() {
   const handleTrashSession = async (sessionId) => { await updateDoc(getDocRef('sessions', sessionId), { trashed: true }); showToast("Sesión enviada a papelera", "success"); };
   const handleRestoreSession = async (session) => { await updateDoc(getDocRef('sessions', session.id), { trashed: false }); showToast("Sesión restaurada"); };
   const handleDeleteSessionForever = async (session) => { await deleteDoc(getDocRef('sessions', session.id)); showToast("Sesión eliminada para siempre", "success"); };
-  const handleCloneSession = async (session) => {
-    const cloned = { ...session, id: Date.now().toString(), name: `${session.name} (Copia)`, date: new Date().toLocaleDateString() };
-    await setDoc(getDocRef('sessions', cloned.id), cleanData(cloned));
-    showToast("Sesión duplicada correctamente");
-  };
-  const handleSaveEvaluation = async (sessionId, rating, comment, gkRatings) => {
-    await updateDoc(getDocRef('sessions', sessionId), { rating, evaluationComment: comment, gkRatings: cleanData(gkRatings) });
-    if(gkRatings) {
-       for(let gkId in gkRatings) {
-          const gk = squad.find(g => String(g.id) === String(gkId));
-          if(gk) {
-             const newHistory = [...(gk.history||[]), { sessionId, date: new Date().toLocaleDateString(), rating: gkRatings[gkId], comment }];
-             await updateDoc(getDocRef('goalkeepers', gkId), { history: cleanData(newHistory) });
-          }
-       }
-    }
-    showToast("Evaluación guardada");
-  };
 
   const handleAddEvent = async (dateString, session) => {
     const existing = calendarEventsState[dateString] || [];
@@ -2137,12 +1681,6 @@ export default function App() {
     const existing = calendarEventsState[dateString] || [];
     await setDoc(getDocRef('calendarEvents', dateString), { events: cleanData(existing.filter(s => String(s.id) !== String(sessionId))) }, { merge: true });
     showToast("Sesión desasignada del día");
-  };
-  const handleSaveAttendance = async (eventId, dateString, attendanceMap) => {
-    const existing = calendarEventsState[dateString] || [];
-    const newEvents = existing.map(s => String(s.id) === String(eventId) ? { ...s, attendance: attendanceMap } : s);
-    await setDoc(getDocRef('calendarEvents', dateString), { events: cleanData(newEvents) }, { merge: true });
-    showToast("Asistencia guardada con éxito");
   };
 
   const handleSendMessage = async (text) => {
@@ -2175,7 +1713,6 @@ export default function App() {
     { id: 'calendar', label: 'Planificador', icon: CalendarIcon },
     { divider: true },
     { id: 'create', label: 'Crear Tarea', icon: ListPlus },
-    { id: 'upload', label: 'Subir Tarea', icon: UploadCloud },
     { divider: true, adminOnly: true },
     { id: 'admin', label: 'Entrenadores', icon: Users, adminOnly: true },
     { id: 'trash', label: 'Papelera', icon: Trash2, adminOnly: true }
@@ -2215,7 +1752,7 @@ export default function App() {
       {deferredPrompt && (
         <div className="fixed bottom-24 left-4 right-4 md:bottom-8 md:left-auto md:right-[5.5rem] bg-white p-4 rounded-2xl shadow-2xl z-[8000] flex items-center justify-between gap-4 border-2 border-blue-900 animate-in slide-in-from-bottom-10">
           <div className="flex items-center gap-3">
-            <img src="/bibliokeepers.PNG" className="w-10 h-10 rounded-xl shadow-sm border border-slate-100" alt="icon" onError={(e) => { e.target.src = FALLBACK_LOGO; }}/>
+            <img src={LOGO_APP_ICON} className="w-10 h-10 rounded-xl shadow-sm border border-slate-100" alt="icon" onError={(e) => { e.target.src = FALLBACK_LOGO; }}/>
             <div className="text-left">
                <p className="font-black text-sm leading-tight text-blue-950 uppercase tracking-tighter">Instalar App</p>
                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Añadir a pantalla de inicio</p>
@@ -2310,9 +1847,8 @@ export default function App() {
                     return (
                       <div key={`grid-task-${t.id}`} className="relative group">
                         {canEditOrDelete && (
-                          <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-100 transition-opacity">
+                          <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onClick={(e)=>{ e.stopPropagation(); setEditingTask(t); setActiveTab('create'); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-blue-600 hover:bg-blue-50"><Edit2 size={14} strokeWidth={3}/></button>
-                            <button onClick={(e)=>{ e.stopPropagation(); handleCloneTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-emerald-600 hover:bg-emerald-50"><Copy size={14} strokeWidth={3}/></button>
                             <button onClick={(e)=>{ e.stopPropagation(); setTaskToDelete(t); }} className="w-8 h-8 rounded-full flex items-center justify-center shadow-xl bg-white text-red-600 hover:bg-red-50"><Trash2 size={14} strokeWidth={3}/></button>
                           </div>
                         )}
@@ -2320,7 +1856,7 @@ export default function App() {
                           <Star size={14} strokeWidth={2.5} fill={isFav ? "currentColor" : "none"}/>
                         </button>
                         {t.visibility === 'private' && <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[9px] font-black px-3 py-1 rounded-full shadow-lg z-30 flex items-center gap-1 uppercase tracking-widest border-2 border-white"><Lock size={10} /> Privada</div>}
-                        <div onClick={() => setSelectedTask(t)} className={`bg-white rounded-[2.5rem] border-2 shadow-sm hover:shadow-xl transition-all flex flex-col text-left cursor-pointer h-full ${inCart?'border-red-500':'border-slate-100 hover:border-red-100'}`}>
+                        <div onClick={() => setSelectedTask(t)} className={`bg-white rounded-[2.5rem] border-2 shadow-sm hover:shadow-xl transition-all flex flex-col text-left cursor-pointer h-full ${inCart?'border-red-500':'border-slate-100'}`}>
                           <div className="relative aspect-[16/9] overflow-hidden rounded-t-[2.5rem]">
                             <img src={t.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="img"/>
                             <button onClick={(e)=>{
@@ -2337,13 +1873,13 @@ export default function App() {
                                      showToast("La sesión ya está llena (4 tareas)", "error");
                                   }
                                }
-                            }} className={`absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center shadow-xl z-20 transition-all ${inCart?'bg-red-600 text-white shadow-red-600/40':'bg-white text-slate-400 hover:bg-red-500 hover:text-white'}`}>
+                            }} className={`absolute top-4 left-4 w-10 h-10 rounded-full flex items-center justify-center shadow-xl z-20 transition-all ${inCart?'bg-red-600 text-white shadow-red-600/40':'bg-white/80 backdrop-blur text-slate-400 hover:bg-red-500 hover:text-white'}`}>
                               {inCart ? <Check size={20} strokeWidth={3}/> : <Plus size={20} strokeWidth={3}/>}
                             </button>
                           </div>
                           <div className="p-5 flex-1 flex flex-col">
                             <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{String(t.category || 'Técnica')}</div>
-                            <h3 className="font-black text-blue-950 uppercase text-sm line-clamp-2 leading-tight min-h-[2.5rem]">{String(t.mainObjective || t.title || '')}</h3>
+                            <h3 className="font-black text-blue-950 uppercase text-sm line-clamp-2">{String(t.mainObjective || t.title || '')}</h3>
                             <div className="mt-auto pt-4 border-t border-slate-100 flex items-center gap-2">
                               <img src={taskAuthor?.avatar} className="w-8 h-8 rounded-full border shadow-sm object-cover" alt="avatar" />
                               <span className="text-[10px] font-black uppercase text-slate-500 truncate">{String(taskAuthor?.name || '')}</span>
@@ -2392,9 +1928,8 @@ export default function App() {
                                   <Star size={16} strokeWidth={2.5} fill={isFav ? "currentColor" : "none"}/>
                                 </button>
                                 {canEditOrDelete && (
-                                  <div className="flex gap-1 opacity-100 transition-opacity">
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                      <button onClick={(e)=>{ e.stopPropagation(); setEditingTask(t); setActiveTab('create'); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-blue-600 hover:bg-blue-100"><Edit2 size={12} strokeWidth={3}/></button>
-                                     <button onClick={(e)=>{ e.stopPropagation(); handleCloneTask(t); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-emerald-600 hover:bg-emerald-100"><Copy size={12} strokeWidth={3}/></button>
                                      <button onClick={(e)=>{ e.stopPropagation(); setTaskToDelete(t); }} className="w-8 h-8 rounded-full flex items-center justify-center bg-slate-50 text-red-600 hover:bg-red-100"><Trash2 size={12} strokeWidth={3}/></button>
                                   </div>
                                 )}
@@ -2410,19 +1945,16 @@ export default function App() {
             </div>
           )}
           
-          {activeTab === 'builder' && <SessionBuilderView sessionCart={sessionCart} setSessionCart={setSessionCart} sessionData={sessionData} setSessionData={setSessionData} showToast={showToast} onSaveTemplate={handleSaveTemplate} currentUser={liveUser} squad={squad} onNewSession={() => { setSessionCart([null, null, null, null]); setSessionData({ ...DEFAULT_SESSION_DATA }); setActiveTab('library'); showToast("Lista para crear una nueva sesión", "success"); }} />}
-          {activeTab === 'calendar' && <CalendarView savedSessions={savedSessionsState} calendarEvents={calendarEventsState} onAddEvent={handleAddEvent} onRemoveEvent={handleRemoveEvent} onLoadSession={loadSession} showToast={showToast} onDeleteSession={setSessionToDelete} onCloneSession={handleCloneSession} onEvaluateSession={setEvaluatingSession} onMarkAttendance={(sessionItem, dateString) => setAttendanceSession({ sessionItem, dateString })} />}
+          {activeTab === 'builder' && <SessionBuilderView sessionCart={sessionCart} setSessionCart={setSessionCart} sessionData={sessionData} setSessionData={setSessionData} showToast={showToast} onSaveTemplate={handleSaveTemplate} currentUser={liveUser} squad={squad} onNewSession={()=>{setSessionCart([null, null, null, null]); setSessionData({...DEFAULT_SESSION_DATA})}} />}
+          {activeTab === 'calendar' && <CalendarView savedSessions={savedSessionsState} calendarEvents={calendarEventsState} onAddEvent={handleAddEvent} onRemoveEvent={handleRemoveEvent} onLoadSession={loadSession} showToast={showToast} />}
           {activeTab === 'create' && <CreateTaskView editingTask={editingTask} onCancelEdit={() => { setEditingTask(null); setActiveTab('library'); }} onTaskSaved={task => { handleSaveTask(task); setEditingTask(null); setActiveTab('library'); showToast("Tarea Guardada"); }} currentUser={liveUser} showToast={showToast} />}
-          {activeTab === 'upload' && <UploadView onTasksExtracted={ts => { ts.forEach(t => handleSaveTask(t)); setActiveTab('library'); showToast(`Se han procesado ${ts.length} tareas correctamente`); }} currentUser={liveUser} showToast={showToast}/>}
-          {activeTab === 'sessions' && <SessionsHistoryView savedSessions={savedSessionsState} onLoadSession={loadSession} onDeleteSession={setSessionToDelete} onCloneSession={handleCloneSession} showToast={showToast} onEvaluateSession={setEvaluatingSession} />}
-          {activeTab === 'trash' && liveUser.role === 'admin' && <TrashView trashedTasks={trashedTasks} onRestoreTask={handleRestoreTask} onDeleteTaskForever={handleDeleteTaskForever} trashedSessions={trashedSessions} onRestoreSession={handleRestoreSession} onDeleteSessionForever={handleDeleteSessionForever} />}
+          {activeTab === 'sessions' && <SessionsHistoryView savedSessions={savedSessionsState} onLoadSession={loadSession} onDeleteSession={setSessionToDelete} />}
           {activeTab === 'admin' && liveUser.role === 'admin' && <AdminView users={users} onSaveUser={handleSaveUser} onToggleUserActive={handleToggleUserActive}/>}
+          {activeTab === 'trash' && liveUser.role === 'admin' && <TrashView trashedTasks={trashedTasks} onRestoreTask={handleRestoreTask} onDeleteTaskForever={handleDeleteTaskForever} trashedSessions={trashedSessions} onRestoreSession={handleRestoreSession} onDeleteSessionForever={handleDeleteSessionForever} />}
         </div>
       </main>
       
       {selectedTask && <TaskDetailModal task={selectedTask} onClose={() => setSelectedTask(null)} users={users} />}
-
-      {attendanceSession && <AttendanceModal sessionObj={attendanceSession} squad={squad} onClose={() => setAttendanceSession(null)} onSave={handleSaveAttendance} showToast={showToast} />}
 
       {taskToDelete && (
         <div className="fixed inset-0 bg-blue-950/90 backdrop-blur-md z-[200] flex items-center justify-center p-4">
@@ -2451,8 +1983,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {evaluatingSession && <EvaluationModal session={evaluatingSession} squad={squad} onClose={() => setEvaluatingSession(null)} onSave={handleSaveEvaluation} showToast={showToast} />}
 
       <div className="fixed bottom-24 md:bottom-8 right-4 md:right-8 z-50 flex flex-col items-end gap-4">
         {isAIOpen && <AIAssistantModal onClose={() => setIsAIOpen(false)} tasks={tasks} setSessionCart={setSessionCart} sessionData={sessionData} setSessionData={setSessionData} setActiveTab={setActiveTab} showToast={showToast} />}
